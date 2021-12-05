@@ -1,7 +1,12 @@
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Context, Result};
+use git2::Status;
 use once_cell::unsync::Lazy;
+use pulldown_cmark::Parser;
 use structopt::StructOpt;
 use syntect::{
     highlighting::ThemeSet,
@@ -31,9 +36,73 @@ pub fn execute(_opts: &Opts) -> Result<()> {
     let project =
         crate::paths::project().context("current directory is not in a codasai project")?;
 
-    let walker = WalkDir::new(&project)
+    render_workspace(&project).context("failed to render workspace")?;
+    render_page(&project).context("failed to render page")?;
+
+    Ok(())
+}
+
+fn render_page(project: &Path) -> Result<()> {
+    let repo = git2::Repository::open(project)
+        .with_context(|| format!("failed to open Git repository at {:?}", project))?;
+    let statuses = repo.statuses(None).context("failed to get Git status")?;
+
+    let mut page = None;
+    for status in statuses.iter() {
+        let path = status.path().ok_or(anyhow::anyhow!(
+            "path is not valid utf-8: {:?}",
+            String::from_utf8_lossy(status.path_bytes())
+        ))?;
+        let path = PathBuf::from(path);
+        if status.status() == Status::WT_NEW
+            && path.starts_with(project.join("_pages"))
+            && path.extension() == Some(OsStr::new("md"))
+        {
+            anyhow::ensure!(page.is_none(), "there is more that one unsaved page");
+            page = Some(path);
+        }
+    }
+
+    let page = page.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
+    let page = std::fs::read_to_string(&page).with_context(|| format!("failed to read {:?}", &page))?;
+
+    let title = extract_title_from_page(&page);
+    let parser = markdown_parser(&page);
+    let mut page_html = String::new();
+    pulldown_cmark::html::push_html(&mut page_html, parser);
+
+    //TODO: Insert into reader template
+
+    Ok(())
+}
+
+fn markdown_parser(markdown: &str) -> Parser {
+    let options = pulldown_cmark::Options::all();
+    Parser::new_ext(markdown, options)
+}
+
+fn extract_title_from_page(page: &str) -> String {
+    use pulldown_cmark::{Event, Tag};
+
+    let parser = markdown_parser(page);
+    let mut in_heading = false;
+    for event in parser {
+        match event {
+            Event::Start(Tag::Heading(_)) => in_heading = true,
+            Event::End(Tag::Heading(_)) => in_heading = false,
+            Event::Text(text) => if in_heading {
+                return text.to_string();
+            }
+            _ => {}
+        }
+    }
+    return String::from("Untitled");
+}
+
+fn render_workspace(project: &Path) -> Result<()> {
+    let walker = WalkDir::new(project)
         .into_iter()
-        .filter_entry(|entry| is_workspace_entry(entry, &project))
+        .filter_entry(|entry| is_workspace_entry(entry, project))
         .filter_map(|entry| {
             if let Err(e) = &entry {
                 log::warn!("failed to read entry {:?}", e);
@@ -52,7 +121,7 @@ pub fn execute(_opts: &Opts) -> Result<()> {
     for entry in walker {
         if let Ok(metadata) = entry.metadata() {
             if metadata.is_file() {
-                render_file_to_preview(entry.path(), &project, &preview_ws)
+                render_file_to_preview(entry.path(), project, &preview_ws)
                     .with_context(|| format!("failed to render file {:?}", entry.path()))?;
             }
         }
@@ -73,10 +142,10 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
             let mut extension = extension.to_owned();
             extension.push(".html");
             preview_path.set_extension(extension);
-        },
+        }
         None => {
             preview_path.set_extension("html");
-        },
+        }
     }
     log::debug!("relative_path {:?}", preview_path);
 
@@ -141,11 +210,7 @@ fn highlight_code(code: &str, syntax: &SyntaxReference, syntax_set: &SyntaxSet) 
 }
 
 fn is_workspace_entry(entry: &DirEntry, project: &Path) -> bool {
-    let special_dirs = vec![
-        ".codasai",
-        ".git",
-        "_pages",
-    ];
+    let special_dirs = vec![".codasai", ".git", "_pages"];
     for dir in special_dirs {
         if entry.path().starts_with(project.join(dir)) {
             return false;
