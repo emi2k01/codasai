@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 structopt = "0.3.25"
+clap = "2.33.0"
 git2 = "0.13.25"
 anyhow = "1.0.51"
 walkdir = "2.3.2"
@@ -13,3 +14,10 @@ env_logger = "0.9.0"
 syntect = "4.6.0"
 once_cell = "1.8.0"
 pulldown-cmark = "0.8.0"
+tera = "1.15.0"
+ammonia = "3.1.2"
+serde = { version = "1.0.130", features = ["derive"] }
+warp = "0.3.2"
+tokio = { version = "1.14.0", features = ["full"] }
+open = "2.0.2"
+sass-rs = "0.2.2"

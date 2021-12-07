@@ -7,6 +7,7 @@ use anyhow::{Context, Result};
 use git2::Status;
 use once_cell::unsync::Lazy;
 use pulldown_cmark::Parser;
+use serde::Serialize;
 use structopt::StructOpt;
 use syntect::{
     highlighting::ThemeSet,
@@ -14,6 +15,7 @@ use syntect::{
     parsing::{SyntaxReference, SyntaxSet},
     util::LinesWithEndings,
 };
+use tera::Tera;
 use walkdir::{DirEntry, WalkDir};
 
 thread_local! {
@@ -28,21 +30,157 @@ thread_local! {
 #[derive(StructOpt)]
 pub struct Opts {
     #[structopt(short, long)]
-    path: Option<PathBuf>,
+    _path: Option<PathBuf>,
+    #[structopt(short, long)]
+    open: bool,
 }
 
-pub fn execute(_opts: &Opts) -> Result<()> {
+#[derive(Serialize)]
+struct PageContext {
+    title: String,
+    content: String,
+}
+
+pub fn execute(opts: &Opts) -> Result<()> {
     //TODO: Take `--path` into account
     let project =
         crate::paths::project().context("current directory is not in a codasai project")?;
+    let export_dir = project.join(".codasai/export");
+    let preview_dir = export_dir.join("preview");
+    let public_dir = export_dir.join("public");
 
+    // clean previous build
+    if preview_dir.exists() {
+        std::fs::remove_dir_all(&preview_dir)
+            .with_context(|| format!("failed to remove directory {:?}", preview_dir))?;
+    }
+
+    if public_dir.exists() {
+        std::fs::remove_dir_all(&public_dir)
+            .with_context(|| format!("failed to remove directory {:?}", public_dir))?;
+    }
+
+    copy_public_dir(&project).context("failed to render _public directory")?;
+    compile_sass(&project).context("failed to render sass files")?;
     render_workspace(&project).context("failed to render workspace")?;
-    render_page(&project).context("failed to render page")?;
+
+    let template_engine = read_templates(&project)?;
+    render_page(&project, template_engine).context("failed to render page")?;
+
+    if opts.open {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_time()
+            .enable_io()
+            .build()
+            .unwrap()
+            .block_on(async {
+                let address = [127, 0, 0, 1];
+                let port = 8000;
+                tokio::spawn(async move {
+                    let url = format!(
+                        "http://{}.{}.{}.{}:{}/preview",
+                        address[0], address[1], address[2], address[3], port
+                    );
+                    if let Err(e) = open::that(url).context("failed to open browser") {
+                        log::warn!("{}", e);
+                    }
+                });
+                warp::serve(warp::fs::dir(export_dir))
+                    .run((address, port))
+                    .await;
+            });
+    }
 
     Ok(())
 }
 
-fn render_page(project: &Path) -> Result<()> {
+fn compile_sass(project: &Path) -> Result<()> {
+    let sass_dir = project.join(".codasai/theme/sass");
+    let out_dir = project.join(".codasai/export/public/style");
+
+    let walkdir = WalkDir::new(&sass_dir)
+        .into_iter()
+        .filter_map(|entry| {
+            if let Err(e) = &entry {
+                log::warn!("failed to read entry {:?}", e);
+            }
+            entry.ok()
+        })
+        .filter(|entry| {
+            entry.path().extension() == Some(OsStr::new("scss"))
+                // ignore scss partials
+                && !entry
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .starts_with("_")
+        });
+
+    for entry in walkdir {
+        if entry.metadata().map(|m| m.is_file()).unwrap_or(false) {
+            let path = entry.path();
+            let compiled_sass = sass_rs::compile_file(path, sass_rs::Options::default())
+                // `compile_file` returns an error that doesn't implement `std::error::Error` -.-
+                .map_err(|e| anyhow::anyhow!("{}", e))
+                .with_context(|| format!("failed to compile sass file {:?}", path))?;
+
+            // Put the compiled SASS files under `out_dir` following the same directory structure they had in `sass_dir`
+            // that is, reuse the hierarchy in brackets in the line below vvv
+            // .codasai/sass/[header/style.scss] -> .codasai/export/preview/public/style/[header/style.css]
+            let relative_path = entry.path().strip_prefix(&sass_dir)?;
+            let mut out_path = out_dir.join(&relative_path);
+            out_path.set_extension("css");
+            let parent_dir = out_path.parent().unwrap();
+
+            anyhow::ensure!(!out_path.exists(), "file already exists {:?}", &out_path);
+
+            std::fs::create_dir_all(&parent_dir)
+                .with_context(|| format!("failed to create directory {:?}", parent_dir))?;
+
+            std::fs::write(&out_path, &compiled_sass)
+                .with_context(|| format!("failed to write to {:?}", out_path))?;
+        }
+    }
+
+    Ok(())
+}
+
+fn copy_public_dir(project: &Path) -> Result<()> {
+    let public_dir = project.join("_public/");
+    let out_dir = project.join(".codasai/export/public/");
+
+    let walkdir = WalkDir::new(&public_dir).into_iter().filter_map(|entry| {
+        if let Err(e) = &entry {
+            log::warn!("failed to read entry {:?}", e);
+        }
+        entry.ok()
+    });
+
+    for entry in walkdir {
+        if entry.metadata().map(|m| m.is_file()).unwrap_or(false) {
+            let relative_path = entry.path().strip_prefix(&public_dir)?;
+            let out_path = out_dir.join(&relative_path);
+            let parent = out_path.parent().unwrap();
+
+            std::fs::create_dir_all(&parent)
+                .with_context(|| format!("failed to create directory {:?}", parent))?;
+
+            std::fs::copy(entry.path(), &out_path).with_context(|| {
+                format!(
+                    "failed to copy file from {:?} to {:?}",
+                    entry.path(),
+                    out_path
+                )
+            })?;
+        }
+    }
+
+    Ok(())
+}
+
+fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
     let repo = git2::Repository::open(project)
         .with_context(|| format!("failed to open Git repository at {:?}", project))?;
     let statuses = repo.statuses(None).context("failed to get Git status")?;
@@ -53,9 +191,10 @@ fn render_page(project: &Path) -> Result<()> {
             "path is not valid utf-8: {:?}",
             String::from_utf8_lossy(status.path_bytes())
         ))?;
+
         let path = PathBuf::from(path);
         if status.status() == Status::WT_NEW
-            && path.starts_with(project.join("_pages"))
+            && path.starts_with("_pages")
             && path.extension() == Some(OsStr::new("md"))
         {
             anyhow::ensure!(page.is_none(), "there is more that one unsaved page");
@@ -64,39 +203,38 @@ fn render_page(project: &Path) -> Result<()> {
     }
 
     let page = page.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
-    let page = std::fs::read_to_string(&page).with_context(|| format!("failed to read {:?}", &page))?;
+    // `page` as given by git2 is relative to the git repository root but we need the absolute path.
+    let page = project.join(page);
+    let page =
+        std::fs::read_to_string(&page).with_context(|| format!("failed to read {:?}", &page))?;
 
-    let title = extract_title_from_page(&page);
+    let title = escape_html(&extract_title_from_page(&page));
+
     let parser = markdown_parser(&page);
-    let mut page_html = String::new();
-    pulldown_cmark::html::push_html(&mut page_html, parser);
+    let mut page_html_unsafe = String::new();
+    pulldown_cmark::html::push_html(&mut page_html_unsafe, parser);
+    let page_html = ammonia::clean(&page_html_unsafe);
 
-    //TODO: Insert into reader template
+    let page_context = PageContext {
+        title,
+        content: page_html,
+    };
+
+    let mut context = tera::Context::new();
+    context.insert("page", &page_context);
+    let reader_html = template_engine
+        .render("template.html", &context)
+        .context("failed to render template")?;
+
+    let preview = project.join(".codasai/export/preview");
+    std::fs::create_dir_all(&preview)
+        .with_context(|| format!("failed to create directory {:?}", preview))?;
+
+    let reader_path = preview.join("index.html");
+    std::fs::write(&reader_path, &reader_html)
+        .with_context(|| format!("failed to write to {:?}", &reader_path))?;
 
     Ok(())
-}
-
-fn markdown_parser(markdown: &str) -> Parser {
-    let options = pulldown_cmark::Options::all();
-    Parser::new_ext(markdown, options)
-}
-
-fn extract_title_from_page(page: &str) -> String {
-    use pulldown_cmark::{Event, Tag};
-
-    let parser = markdown_parser(page);
-    let mut in_heading = false;
-    for event in parser {
-        match event {
-            Event::Start(Tag::Heading(_)) => in_heading = true,
-            Event::End(Tag::Heading(_)) => in_heading = false,
-            Event::Text(text) => if in_heading {
-                return text.to_string();
-            }
-            _ => {}
-        }
-    }
-    return String::from("Untitled");
 }
 
 fn render_workspace(project: &Path) -> Result<()> {
@@ -110,7 +248,7 @@ fn render_workspace(project: &Path) -> Result<()> {
             entry.ok()
         });
 
-    let preview_ws = project.join(".codasai/preview/workspace");
+    let preview_ws = project.join(".codasai/export/preview/workspace");
     if preview_ws.exists() {
         std::fs::remove_dir_all(&preview_ws)
             .with_context(|| format!("failed to remove directory {:?}", &preview_ws))?;
@@ -177,6 +315,43 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
     Ok(())
 }
 
+fn read_templates(project: &Path) -> Result<Tera> {
+    let templates_dir = project.join(".codasai/theme/templates");
+    let mut templates_glob = templates_dir
+        .to_str()
+        .ok_or(anyhow::anyhow!("templates path is not valid UTF-8"))?
+        .to_string();
+    templates_glob.push_str("/*.html");
+
+    Tera::new(&templates_glob).context("failed to build template engine")
+}
+
+fn markdown_parser(markdown: &str) -> Parser {
+    let options = pulldown_cmark::Options::all();
+    Parser::new_ext(markdown, options)
+}
+
+fn extract_title_from_page(page: &str) -> String {
+    use pulldown_cmark::{Event, Tag};
+
+    let parser = markdown_parser(page);
+    let mut in_heading = false;
+    for event in parser {
+        match event {
+            Event::Start(Tag::Heading(_)) => in_heading = true,
+            Event::End(Tag::Heading(_)) => in_heading = false,
+            Event::Text(text) => {
+                if in_heading {
+                    return text.to_string();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    return String::from("Untitled");
+}
+
 fn escape_html(text: &str) -> String {
     let mut escaped = String::new();
     for ch in text.chars() {
@@ -210,7 +385,7 @@ fn highlight_code(code: &str, syntax: &SyntaxReference, syntax_set: &SyntaxSet) 
 }
 
 fn is_workspace_entry(entry: &DirEntry, project: &Path) -> bool {
-    let special_dirs = vec![".codasai", ".git", "_pages"];
+    let special_dirs = vec![".codasai", ".git", "_pages", "_public"];
     for dir in special_dirs {
         if entry.path().starts_with(project.join(dir)) {
             return false;
