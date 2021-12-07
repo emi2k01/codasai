@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/public/style/style.css" />
+    <title>{{ page.title }}</title>
+</head>
+
+<body>
+    <header>
+        <div>
+            <a href="#" title="TODO">←</a>
+            <a href="#" title="TODO">→</a>
+        </div>
+    </header>
+    <div class="three-columns">
+        <main id="page" class="markdown-body">{{ page.content | safe }}</main>
+        <section id="file-viewer">
+            <div class="file-name"><span>main.rs</span></div>
+            <div class="code-viewer">
+                <div class="line-numbers">
+                    <a href="#">1</a>
+                    <a href="#">2</a>
+                    <a href="#">3</a>
+                </div>
+                <pre><code>fn main() {
+    println!("hello, world!");
+}</code></pre>
+            </div>
+        </section>
+        <section id="explorer">
+            <h2>Explorer</h2>
+            <ul>
+                <li>
+                    <span>src</span>
+                    <ul>
+                        <li><span>main.rs</span></li>
+                    </ul>
+                </li>
+                <li><span>Cargo.toml</span></li>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>

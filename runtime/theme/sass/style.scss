@@ -1,0 +1,137 @@
+$darker-color: rgb(22, 20, 27);
+$dark-color: rgb(28, 25, 33);
+$medium-color: rgb(52, 46, 65);
+$white: rgb(255, 255, 255);
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+body {
+    background-color: $darker-color;
+}
+
+header {
+    display: flex;
+    padding: 0.4rem 1.5rem;
+    justify-content: flex-end;
+
+    div {
+        display: flex;
+
+        a {
+            display: block;
+            padding: 0.3em 0.6em;
+            font-size: 1.1rem;
+            background-color: $medium-color;
+            color: $white;
+            text-decoration: none;
+
+            &:nth-child(1) {
+                border-radius: 5px 0 0 5px;
+            }
+
+            &:nth-child(2) {
+                border-radius: 0 5px 5px 0;
+            }
+
+            &:hover {
+                background-color: darken($color: $medium-color, $amount: 5%);
+            }
+        }
+    }
+}
+
+.three-columns{
+    display: flex;
+    gap: 10px;
+    color: $white;
+
+    #page {
+        flex-basis: 80ch;
+        flex-grow: 3;
+        padding: 1.5em;
+    }    
+
+    #file-viewer {
+        flex-basis: 80ch;
+        flex-grow: 2;
+
+        .file-name {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.4em 0;
+            border-bottom: solid 5px $darker-color;
+
+            span {
+                color: white;
+            }
+        }
+
+        .code-viewer {
+            $line-height: 1.2em;
+
+            display: flex;
+            padding: 1em;
+
+            .line-numbers {
+                width: 3em;
+                line-height: $line-height;
+                text-align: right;
+                padding-right: 1em;
+
+                a {
+                    display: block;
+                    font-size: 0.75em;
+                    color: transparentize($color: $white, $amount: 0.5);
+                    text-decoration: none;
+                }
+            }
+            
+            pre {
+                color: white;
+
+                code {
+                    font-size: 1rem;
+                    font-family: monospace;
+                    line-height: $line-height;
+                }
+            }
+        }
+    }
+
+    #explorer {
+        flex-basis: 25ch;
+        flex-grow: 1;
+
+        h2 {
+            padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+        }
+        
+        ul {
+            list-style: none;
+        }
+
+        li {
+            span {
+                display: block;
+                padding: 0.2em 1.5rem;    
+
+                &:hover {
+                    cursor: pointer;
+                    background-color: $medium-color;
+                }
+            }
+        }
+    }
+    
+    & > * {
+        background-color: $dark-color;
+    }
+}
+
+@import './markdown.scss';
