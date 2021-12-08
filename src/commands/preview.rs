@@ -31,8 +31,10 @@ thread_local! {
 pub struct Opts {
     #[structopt(short, long)]
     _path: Option<PathBuf>,
-    #[structopt(short, long)]
-    open: bool,
+    #[structopt(long)]
+    no_open: bool,
+    #[structopt(long)]
+    no_run_server: bool,
 }
 
 #[derive(Serialize)]
@@ -101,7 +103,9 @@ pub fn execute(opts: &Opts) -> Result<()> {
     let template_engine = read_templates(&project)?;
     render_page(&project, template_engine).context("failed to render page")?;
 
-    launch_server(&export_dir, opts.open);
+    if !opts.no_run_server {
+        launch_server(&export_dir, !opts.no_open);
+    }
 
     Ok(())
 }
@@ -318,10 +322,12 @@ fn build_workspace_tree(project: &Path) -> Result<Directory> {
                 let last_dir = directories.pop().unwrap();
                 directories.last_mut().unwrap().directories.push(last_dir);
             }
-            let url = Path::new("/preview/workspace")
+            let mut url = Path::new("/preview/workspace")
                 .join(entry.path().strip_prefix(&workspace).unwrap())
                 .display()
                 .to_string();
+            url.push_str(".html");
+
             directories.last_mut().unwrap().files.push(File::new(
                 entry.file_name().to_str().unwrap().to_string(),
                 entry.depth() as i32,
@@ -398,8 +404,13 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
                 let highlighted_code = highlight_code(&code_unsafe, syntax, &ss);
                 std::fs::write(&preview_path, highlighted_code)
                     .with_context(|| format!("failed to write to {:?}", &preview_path))?;
+            } else {
+                //TODO: See if there's a better way to write both branches
+                // of languages that have highlight support and those that don't
+                let code = escape_html(&code_unsafe);
+                std::fs::write(&preview_path, &code)
+                    .with_context(|| format!("failed to write to {:?}", &preview_path))?;
             }
-
             Ok(())
         })?
     } else {
