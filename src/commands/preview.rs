@@ -16,7 +16,7 @@ use syntect::{
     util::LinesWithEndings,
 };
 use tera::Tera;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 thread_local! {
     static SYNTAX_SET: Lazy<SyntaxSet> = Lazy::new(|| {
@@ -60,7 +60,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
             .with_context(|| format!("failed to remove directory {:?}", public_dir))?;
     }
 
-    copy_user_public_dir(&project).context("failed to export _public directory")?;
+    copy_user_public_dir(&project).context("failed to export public directory")?;
     copy_theme_public_dir(&project).context("failed to export theme public directory")?;
     compile_sass(&project).context("failed to render sass files")?;
     render_workspace(&project).context("failed to render workspace")?;
@@ -160,7 +160,7 @@ fn copy_theme_public_dir(project: &Path) -> Result<()> {
 }
 
 fn copy_user_public_dir(project: &Path) -> Result<()> {
-    let public = project.join("_public");
+    let public = project.join("public");
     let dest = project.join(".codasai/export/public");
 
     copy_dir_contents(&public, &dest)
@@ -210,7 +210,7 @@ fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
 
         let path = PathBuf::from(path);
         if status.status() == Status::WT_NEW
-            && path.starts_with("_pages")
+            && path.starts_with("pages")
             && path.extension() == Some(OsStr::new("md"))
         {
             anyhow::ensure!(page.is_none(), "there is more that one unsaved page");
@@ -254,15 +254,14 @@ fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
 }
 
 fn render_workspace(project: &Path) -> Result<()> {
-    let walker = WalkDir::new(project)
-        .into_iter()
-        .filter_entry(|entry| is_workspace_entry(entry, project))
-        .filter_map(|entry| {
-            if let Err(e) = &entry {
-                log::warn!("failed to read entry {:?}", e);
-            }
-            entry.ok()
-        });
+    let workspace = project.join("workspace");
+
+    let walker = WalkDir::new(&workspace).into_iter().filter_map(|entry| {
+        if let Err(e) = &entry {
+            log::warn!("failed to read entry {:?}", e);
+        }
+        entry.ok()
+    });
 
     let preview_ws = project.join(".codasai/export/preview/workspace");
     if preview_ws.exists() {
@@ -287,10 +286,11 @@ fn render_workspace(project: &Path) -> Result<()> {
 /// Renders a file in the workspace to html and saves it under `preview_ws`
 /// following the same directory structure relative to the project directory.
 fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Result<()> {
-    log::debug!("path {:?}", file);
-    let relative_path = file.strip_prefix(&project).expect("failed to strip prefix");
-    log::debug!("relative_path {:?}", relative_path);
+    let relative_path = file
+        .strip_prefix(&project.join("workspace"))
+        .expect("failed to strip prefix");
     let mut preview_path = preview_ws.join(relative_path);
+
     match preview_path.extension() {
         Some(extension) => {
             let mut extension = extension.to_owned();
@@ -301,7 +301,6 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
             preview_path.set_extension("html");
         }
     }
-    log::debug!("relative_path {:?}", preview_path);
 
     let parent = preview_path.parent().unwrap();
     std::fs::create_dir_all(parent)
@@ -398,14 +397,4 @@ fn highlight_code(code: &str, syntax: &SyntaxReference, syntax_set: &SyntaxSet) 
     }
 
     html_generator.finalize()
-}
-
-fn is_workspace_entry(entry: &DirEntry, project: &Path) -> bool {
-    let special_dirs = vec![".codasai", ".git", "_pages", "_public"];
-    for dir in special_dirs {
-        if entry.path().starts_with(project.join(dir)) {
-            return false;
-        }
-    }
-    return true;
 }
