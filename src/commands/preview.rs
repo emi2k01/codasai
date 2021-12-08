@@ -60,22 +60,29 @@ pub fn execute(opts: &Opts) -> Result<()> {
             .with_context(|| format!("failed to remove directory {:?}", public_dir))?;
     }
 
-    copy_public_dir(&project).context("failed to render _public directory")?;
+    copy_user_public_dir(&project).context("failed to export _public directory")?;
+    copy_theme_public_dir(&project).context("failed to export theme public directory")?;
     compile_sass(&project).context("failed to render sass files")?;
     render_workspace(&project).context("failed to render workspace")?;
 
     let template_engine = read_templates(&project)?;
     render_page(&project, template_engine).context("failed to render page")?;
 
-    if opts.open {
-        tokio::runtime::Builder::new_current_thread()
-            .enable_time()
-            .enable_io()
-            .build()
-            .unwrap()
-            .block_on(async {
-                let address = [127, 0, 0, 1];
-                let port = 8000;
+    launch_server(&export_dir, opts.open);
+
+    Ok(())
+}
+
+fn launch_server(export_dir: &Path, open: bool) {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_time()
+        .enable_io()
+        .build()
+        .unwrap()
+        .block_on(async {
+            let address = [127, 0, 0, 1];
+            let port = 8000;
+            if open {
                 tokio::spawn(async move {
                     let url = format!(
                         "http://{}.{}.{}.{}:{}/preview",
@@ -85,13 +92,11 @@ pub fn execute(opts: &Opts) -> Result<()> {
                         log::warn!("{}", e);
                     }
                 });
-                warp::serve(warp::fs::dir(export_dir))
-                    .run((address, port))
-                    .await;
-            });
-    }
-
-    Ok(())
+            }
+            warp::serve(warp::fs::dir(export_dir.to_path_buf()))
+                .run((address, port))
+                .await;
+        });
 }
 
 fn compile_sass(project: &Path) -> Result<()> {
@@ -147,11 +152,22 @@ fn compile_sass(project: &Path) -> Result<()> {
     Ok(())
 }
 
-fn copy_public_dir(project: &Path) -> Result<()> {
-    let public_dir = project.join("_public/");
-    let out_dir = project.join(".codasai/export/public/");
+fn copy_theme_public_dir(project: &Path) -> Result<()> {
+    let public = project.join(".codasai/theme/public");
+    let dest = project.join(".codasai/export/public/theme");
 
-    let walkdir = WalkDir::new(&public_dir).into_iter().filter_map(|entry| {
+    copy_dir_contents(&public, &dest)
+}
+
+fn copy_user_public_dir(project: &Path) -> Result<()> {
+    let public = project.join("_public");
+    let dest = project.join(".codasai/export/public");
+
+    copy_dir_contents(&public, &dest)
+}
+
+fn copy_dir_contents(dir: &Path, dest: &Path) -> Result<()> {
+    let walkdir = WalkDir::new(&dir).into_iter().filter_map(|entry| {
         if let Err(e) = &entry {
             log::warn!("failed to read entry {:?}", e);
         }
@@ -160,8 +176,8 @@ fn copy_public_dir(project: &Path) -> Result<()> {
 
     for entry in walkdir {
         if entry.metadata().map(|m| m.is_file()).unwrap_or(false) {
-            let relative_path = entry.path().strip_prefix(&public_dir)?;
-            let out_path = out_dir.join(&relative_path);
+            let relative_path = entry.path().strip_prefix(&dir)?;
+            let out_path = dest.join(&relative_path);
             let parent = out_path.parent().unwrap();
 
             std::fs::create_dir_all(&parent)
