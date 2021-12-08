@@ -1,0 +1,23 @@
+{% macro explorer_directory(directory) %}
+<li>
+    <div>
+        <span style="padding-left: calc(var(--list-padding) * ({{ directory.depth }} - 1));">{{ directory.name }}</span>
+    </div>
+    <ul>
+        {% for dir in directory.directories %}
+            {{ self::explorer_directory(directory = dir) }}
+        {% endfor %}
+        {% for file in directory.files %}
+            {{ self::explorer_file(file = file) }}
+        {% endfor %}
+    </ul>
+</li>
+{% endmacro %}
+
+{% macro explorer_file(file) %}
+<li>
+    <div>
+        <span style="padding-left: calc(var(--list-padding) * ({{ file.depth }} - 1));">{{ file.name }}</span>
+    </div>
+<li>
+{% endmacro %}

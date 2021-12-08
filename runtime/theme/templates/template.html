@@ -1,3 +1,5 @@
+{% import "macros.html" as macros %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -34,13 +36,12 @@
         <section id="explorer">
             <h2>Explorer</h2>
             <ul>
-                <li>
-                    <span>src</span>
-                    <ul>
-                        <li><span>main.rs</span></li>
-                    </ul>
-                </li>
-                <li><span>Cargo.toml</span></li>
+                {% for dir in page.workspace.directories %}
+                    {{ macros::explorer_directory(directory = dir) }}
+                {% endfor %}
+                {% for file in page.workspace.files %}
+                    {{ macros::explorer_file(file = file) }}
+                {% endfor %}
             </ul>
         </section>
     </div>
