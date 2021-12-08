@@ -12,38 +12,42 @@
 </head>
 
 <body>
-    <header>
-        <div>
-            <a href="#" title="TODO">←</a>
-            <a href="#" title="TODO">→</a>
-        </div>
-    </header>
-    <div class="three-columns">
-        <main id="page" class="markdown-body">{{ page.content | safe }}</main>
-        <section id="file-viewer">
-            <div class="file-name"><span>main.rs</span></div>
-            <div class="code-viewer">
-                <div class="line-numbers">
-                    <a href="#">1</a>
-                    <a href="#">2</a>
-                    <a href="#">3</a>
-                </div>
-                <pre><code>fn main() {
+    <div id="wrapper">
+        <header>
+            <div>
+                <a href="#" title="TODO">←</a>
+                <a href="#" title="TODO">→</a>
+            </div>
+        </header>
+        <div class="three-columns">
+            <main id="page" class="markdown-body">{{ page.content | safe }}</main>
+            <section id="file-viewer">
+                <div class="file-name"><span>main.rs</span></div>
+                <div class="code-viewer">
+                    <div class="line-numbers">
+                        <a href="#">1</a>
+                        <a href="#">2</a>
+                        <a href="#">3</a>
+                    </div>
+                    <pre><code id="code-block">fn main() {
     println!("hello, world!");
 }</code></pre>
-            </div>
-        </section>
-        <section id="explorer">
-            <h2>Explorer</h2>
-            <ul>
-                {% for dir in page.workspace.directories %}
-                    {{ macros::explorer_directory(directory = dir) }}
-                {% endfor %}
-                {% for file in page.workspace.files %}
-                    {{ macros::explorer_file(file = file) }}
-                {% endfor %}
-            </ul>
-        </section>
+                </div>
+            </section>
+            <section id="explorer">
+                <h2>Explorer</h2>
+                <ul>
+                    {% for dir in page.workspace.directories %}
+                        {{ macros::explorer_directory(directory = dir) }}
+                    {% endfor %}
+                    {% for file in page.workspace.files %}
+                        {{ macros::explorer_file(file = file) }}
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
     </div>
+    <script src="/public/theme/main.js"></script>
 </body>
+
 </html>

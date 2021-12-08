@@ -1,8 +1,8 @@
 {% macro explorer_directory(directory) %}
 <li>
-    <div>
+    <button>
         <span style="padding-left: calc(var(--list-padding) * ({{ directory.depth }} - 1));">{{ directory.name }}</span>
-    </div>
+    </button>
     <ul>
         {% for dir in directory.directories %}
             {{ self::explorer_directory(directory = dir) }}
@@ -16,8 +16,8 @@
 
 {% macro explorer_file(file) %}
 <li>
-    <div>
+    <button class="file-button" data-url="{{ file.url }}">
         <span style="padding-left: calc(var(--list-padding) * ({{ file.depth }} - 1));">{{ file.name }}</span>
-    </div>
+    </button>
 <li>
 {% endmacro %}

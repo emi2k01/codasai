@@ -19,6 +19,12 @@ body {
     background-color: $darker-color;
 }
 
+#wrapper {
+    display: flex;
+    height: 100vh;
+    flex-direction: column;
+}
+
 header {
     display: flex;
     padding: 0.4rem 1.5rem;
@@ -52,18 +58,23 @@ header {
 
 .three-columns{
     display: flex;
-    gap: 10px;
     color: $white;
+    overflow-y: auto;
+
+    & > * + * {
+        margin-left: 10px;
+    }
 
     #page {
-        flex-basis: 80ch;
-        flex-grow: 3;
+        width: 35%;
+        min-width: 20ch;
         padding: 1.5em;
+        overflow-y: auto;
     }    
 
     #file-viewer {
-        flex-basis: 80ch;
-        flex-grow: 2;
+        width: 50%;
+        flex-shrink: 0;
 
         .file-name {
             display: flex;
@@ -82,9 +93,10 @@ header {
 
             display: flex;
             padding: 1em;
+            width: 100%;
 
             .line-numbers {
-                width: 3em;
+                min-width: 3em;
                 line-height: $line-height;
                 text-align: right;
                 padding-right: 1em;
@@ -97,34 +109,48 @@ header {
                     text-decoration: none;
                 }
             }
-            
+
             pre {
                 color: white;
+                flex-basis: 100%;
+                overflow-x: auto;
 
                 code {
                     font-size: 1rem;
                     font-family: monospace;
                     line-height: $line-height;
+                    max-width: 100%;
+
+                    * {
+                        font-family: inherit;
+                    }
                 }
             }
+            
         }
     }
 
     #explorer {
-        flex-basis: 25ch;
-        flex-grow: 1;
+        width: 15%;
 
         h2 {
             padding: 1.5rem 1.5rem 0.75rem 1.5rem;
         }
         
         ul {
+            width: 100%;
             list-style: none;
         }
 
         li {
-            div {
+            button {
+                display: block;
                 padding: 0.2em 1.5rem;
+                width: 100%;
+                color: inherit;
+                background-color: transparent;
+                border: none;
+                text-align: left;
                 
                 &:hover {
                     cursor: pointer;
