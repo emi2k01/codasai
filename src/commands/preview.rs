@@ -36,9 +36,42 @@ pub struct Opts {
 }
 
 #[derive(Serialize)]
+struct File {
+    name: String,
+    depth: i32,
+    url: String,
+}
+
+impl File {
+    fn new(name: String, depth: i32, url: String) -> Self {
+        Self { name, depth, url }
+    }
+}
+
+#[derive(Serialize)]
+struct Directory {
+    name: String,
+    depth: i32,
+    directories: Vec<Directory>,
+    files: Vec<File>,
+}
+
+impl Directory {
+    fn new(name: String, depth: i32) -> Self {
+        Self {
+            name,
+            depth,
+            directories: Vec::new(),
+            files: Vec::new(),
+        }
+    }
+}
+
+#[derive(Serialize)]
 struct PageContext {
     title: String,
     content: String,
+    workspace: Directory,
 }
 
 pub fn execute(opts: &Opts) -> Result<()> {
@@ -234,6 +267,7 @@ fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
     let page_context = PageContext {
         title,
         content: page_html,
+        workspace: build_workspace_tree(&project)?,
     };
 
     let mut context = tera::Context::new();
@@ -251,6 +285,53 @@ fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
         .with_context(|| format!("failed to write to {:?}", &reader_path))?;
 
     Ok(())
+}
+
+fn build_workspace_tree(project: &Path) -> Result<Directory> {
+    let workspace = project.join("workspace");
+
+    let mut directories = vec![Directory::new(String::new(), 0)];
+    let mut depth = 0;
+
+    let walker = WalkDir::new(&workspace)
+        .into_iter()
+        .filter_map(|entry| {
+            if let Err(e) = &entry {
+                log::warn!("failed to read entry {:?}", e);
+            }
+            entry.ok()
+        })
+        .skip(1); // skip `workspace/`
+
+    for entry in walker {
+        if entry.file_type().is_dir() {
+            if entry.depth() <= depth {
+                let last_dir = directories.pop().unwrap();
+                directories.last_mut().unwrap().directories.push(last_dir);
+            }
+            directories.push(Directory::new(
+                entry.file_name().to_str().unwrap().to_string(),
+                entry.depth() as i32,
+            ));
+        } else if entry.file_type().is_file() {
+            if entry.depth() < depth {
+                let last_dir = directories.pop().unwrap();
+                directories.last_mut().unwrap().directories.push(last_dir);
+            }
+            let url = Path::new("/preview/workspace")
+                .join(entry.path().strip_prefix(&workspace).unwrap())
+                .display()
+                .to_string();
+            directories.last_mut().unwrap().files.push(File::new(
+                entry.file_name().to_str().unwrap().to_string(),
+                entry.depth() as i32,
+                url,
+            ))
+        }
+        depth = entry.depth();
+    }
+
+    Ok(directories.pop().unwrap())
 }
 
 fn render_workspace(project: &Path) -> Result<()> {
