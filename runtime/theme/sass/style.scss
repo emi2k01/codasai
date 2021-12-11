@@ -21,8 +21,8 @@ body {
 
 #wrapper {
     display: flex;
-    height: 100vh;
     flex-direction: column;
+    height: 100vh;
 }
 
 header {
@@ -59,7 +59,7 @@ header {
 .three-columns{
     display: flex;
     color: $white;
-    overflow-y: auto;
+    min-height: 0;
 
     & > * + * {
         margin-left: 10px;
@@ -75,6 +75,10 @@ header {
     #file-viewer {
         width: 50%;
         flex-shrink: 0;
+        max-height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
 
         .file-name {
             display: flex;
@@ -94,6 +98,7 @@ header {
             display: flex;
             padding: 1em;
             width: 100%;
+            overflow-y: auto;
 
             .line-numbers {
                 min-width: 3em;
@@ -113,13 +118,16 @@ header {
             pre {
                 color: white;
                 flex-basis: 100%;
-                overflow-x: auto;
+                height: 100%;
+                min-width: 0;
 
                 code {
                     font-size: 1rem;
                     font-family: monospace;
                     line-height: $line-height;
+                    display: block;
                     max-width: 100%;
+                    overflow-x: auto;
 
                     * {
                         font-family: inherit;
@@ -132,6 +140,7 @@ header {
 
     #explorer {
         width: 15%;
+        overflow-y: auto;
 
         h2 {
             padding: 1.5rem 1.5rem 0.75rem 1.5rem;
