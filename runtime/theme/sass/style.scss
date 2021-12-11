@@ -152,6 +152,24 @@ header {
         }
 
         li {
+
+            &.open {
+                & > :not(ul) .folder-closed {
+                    display: none;
+                }
+            }
+
+            &:not(.open) {
+                & > ul {
+                    height: 0;
+                    overflow: hidden;
+                }
+                
+                & > :not(ul) .folder-open {
+                    display: none;
+                }
+            }
+
             button {
                 display: block;
                 padding: 0.2em 1.5rem;
@@ -166,8 +184,14 @@ header {
                     background-color: $medium-color;
                 }
             }
+            
             span {
-                display: block;
+                display: flex;
+                align-items: center;
+                
+                i {
+                    margin-right: 0.35rem;
+                }
             }
         }
     }

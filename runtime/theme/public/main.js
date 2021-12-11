@@ -1,4 +1,20 @@
 function main() {
+    addFileButtonsEvents();
+    addDirectoryButtonsEvents();
+}
+
+function addDirectoryButtonsEvents() {
+    let dirButtons = document.getElementsByClassName("directory-button");
+
+    for (let i = 0; i < dirButtons.length; i++) {
+        const dirButton = dirButtons[i];
+        dirButton.addEventListener("click", function(event) {
+            event.currentTarget.parentNode.classList.toggle("open");
+        });
+    }
+}
+
+function addFileButtonsEvents() {
     let fileButtons = document.getElementsByClassName("file-button");
 
     for (let i = 0; i < fileButtons.length; i++) {
