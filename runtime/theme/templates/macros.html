@@ -17,7 +17,7 @@
 {% macro explorer_file(file) %}
 <li>
     <button class="file-button" data-url="{{ file.url }}">
-        <span style="padding-left: calc(var(--list-padding) * ({{ file.depth }} - 1));">{{ file.name }}</span>
+        <span class="file-name" data-file-name="{{ file.name }}" style="padding-left: calc(var(--list-padding) * ({{ file.depth }} - 1));">{{ file.name }}</span>
     </button>
 <li>
 {% endmacro %}
