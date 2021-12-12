@@ -1,6 +1,25 @@
-function main() {
-    addFileButtonsEvents();
-    addDirectoryButtonsEvents();
+import { parseState } from "./state_parser.js";
+
+function addLinkEvents() {
+    window.addEventListener("hashchange", applyStateFromHash);
+}
+
+function applyStateFromHash() {
+    let state = decodeURIComponent(window.location.hash);
+
+    const magic_prefix = "#csai:";
+
+    if (state.startsWith(magic_prefix)) {
+        state = parseState(state.substring(magic_prefix.length));
+        applyState(state);
+    }
+}
+
+function applyState(state) {
+    if (state.action == "open_file") {
+        let file = state.argument("file");
+        openFile(file);
+    }
 }
 
 function addDirectoryButtonsEvents() {
@@ -10,18 +29,6 @@ function addDirectoryButtonsEvents() {
         const dirButton = dirButtons[i];
         dirButton.addEventListener("click", function (event) {
             event.currentTarget.parentNode.classList.toggle("open");
-        });
-    }
-}
-
-function addFileButtonsEvents() {
-    let fileButtons = document.getElementsByClassName("file-button");
-
-    for (let i = 0; i < fileButtons.length; i++) {
-        const fileButton = fileButtons[i];
-        fileButton.addEventListener("click", function (event) {
-            let filePath = fileButton.getAttribute("data-path");
-            openFile(filePath);
         });
     }
 }
@@ -77,6 +84,12 @@ function updateCodeView(fileName, code) {
 
 function lineNumberTemplate(line) {
     return `<a href=\"#\">${line}</a>\n`;
+}
+
+function main() {
+    applyStateFromHash();
+    addLinkEvents();
+    addDirectoryButtonsEvents();
 }
 
 main();
