@@ -8,7 +8,7 @@ function addDirectoryButtonsEvents() {
 
     for (let i = 0; i < dirButtons.length; i++) {
         const dirButton = dirButtons[i];
-        dirButton.addEventListener("click", function(event) {
+        dirButton.addEventListener("click", function (event) {
             event.currentTarget.parentNode.classList.toggle("open");
         });
     }
@@ -20,25 +20,28 @@ function addFileButtonsEvents() {
     for (let i = 0; i < fileButtons.length; i++) {
         const fileButton = fileButtons[i];
         fileButton.addEventListener("click", function (event) {
-            let url = fileButton.getAttribute("data-url");
-            let fileName = event.currentTarget
-                .getElementsByClassName("file-name")[0]
-                .getAttribute("data-file-name");
-
-            //TODO: Add error alert
-            fetch(url)
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error("request error");
-                    }
-                    return response.text();
-                })
-                .then((code) => {
-                    updateCodeView(fileName, code);
-                })
-                .catch((error) => console.error("fetch error: ", error));
+            let filePath = fileButton.getAttribute("data-path");
+            openFile(filePath);
         });
     }
+}
+
+function openFile(filePath) {
+    let prefix = document.body.getAttribute("data-workspace-url");
+    let url = prefix + "/" + filePath + ".html";
+
+    //TODO: Add error alert
+    fetch(url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("request error");
+            }
+            return response.text();
+        })
+        .then((code) => {
+            updateCodeView(filePath, code);
+        })
+        .catch((error) => console.error("fetch error: ", error));
 }
 
 function updateCodeView(fileName, code) {
