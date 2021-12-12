@@ -15,9 +15,7 @@ enum Args {
 }
 
 fn main() -> Result<()> {
-    env_logger::Builder::from_env(Env::default()
-        .default_filter_or("info"))
-        .init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let args = Args::from_args();
 

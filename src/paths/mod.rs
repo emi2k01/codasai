@@ -1,4 +1,4 @@
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 
@@ -6,7 +6,7 @@ pub fn project() -> Result<PathBuf> {
     let mut current_path = Path::new(".")
         .canonicalize()
         .with_context(|| "failed to canonicalize current directory")?;
-        
+
     let mut current_dir = std::fs::read_dir(&current_path)
         .with_context(|| format!("failed to read directory {:?}", current_path))?;
 

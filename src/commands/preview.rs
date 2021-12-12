@@ -41,12 +41,12 @@ pub struct Opts {
 struct File {
     name: String,
     depth: i32,
-    url: String,
+    path: String,
 }
 
 impl File {
-    fn new(name: String, depth: i32, url: String) -> Self {
-        Self { name, depth, url }
+    fn new(name: String, depth: i32, path: String) -> Self {
+        Self { name, depth, path }
     }
 }
 
@@ -322,16 +322,11 @@ fn build_workspace_tree(project: &Path) -> Result<Directory> {
                 let last_dir = directories.pop().unwrap();
                 directories.last_mut().unwrap().directories.push(last_dir);
             }
-            let mut url = Path::new("/preview/workspace")
-                .join(entry.path().strip_prefix(&workspace).unwrap())
-                .display()
-                .to_string();
-            url.push_str(".html");
 
             directories.last_mut().unwrap().files.push(File::new(
                 entry.file_name().to_str().unwrap().to_string(),
                 entry.depth() as i32,
-                url,
+                entry.path().strip_prefix(&workspace)?.display().to_string(),
             ))
         }
         depth = entry.depth();
