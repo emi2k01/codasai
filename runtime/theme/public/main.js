@@ -19,6 +19,37 @@ function applyState(state) {
     if (state.action == "open_file") {
         let file = state.argument("file");
         openFile(file);
+    } else if (state.action == "highlight_regex") {
+        let file = state.argument("file");
+        let from = state.argument("from");
+        let to = state.argument("to");
+
+        let fromRegex = new RegExp(from, "m");
+        let toRegex = new RegExp(to, "m");
+
+        openFile(file, function() {
+            // we use a duplicate of the code block with transparent font color
+            // so that we highlight blocks align with the code since we don't
+            // want to lose the syntax highlighting and we want to avoid mixing
+            // the HTML tags for line highlighting and syntax highlighting
+            let codeBgEl = document.getElementById("code-block-bg");
+            let code = codeBgEl.innerText;
+
+            let fromIdx = code.search(fromRegex);
+            // we start searching after `fromIdx` but we need the index to be
+            // based on the whole code so we add the `fromIdx` (plus 1 'cause
+            // 0-based)
+            let toIdx = code.substring(fromIdx+1).search(toRegex) + fromIdx+1;
+
+            let codeHtmlHighlighted = code.substring(0, fromIdx);
+            codeHtmlHighlighted += "<span class='highlight'>";
+            codeHtmlHighlighted += code.substring(fromIdx, toIdx+1);
+            codeHtmlHighlighted += "</span>";
+            // we don't need the rest of the code since we only use the code
+            // for alignment
+
+            codeBgEl.innerHTML = codeHtmlHighlighted;
+        });
     }
 }
 
@@ -33,7 +64,7 @@ function addDirectoryButtonsEvents() {
     }
 }
 
-function openFile(filePath) {
+function openFile(filePath, callback) {
     let prefix = document.body.getAttribute("data-workspace-url");
     let url = prefix + "/" + filePath + ".html";
 
@@ -47,6 +78,9 @@ function openFile(filePath) {
         })
         .then((code) => {
             updateCodeView(filePath, code);
+            if (callback != undefined) {
+                callback();
+            }
         })
         .catch((error) => console.error("fetch error: ", error));
 }
@@ -55,6 +89,8 @@ function updateCodeView(fileName, code) {
     // - content
     let codeBlock = document.getElementById("code-block");
     codeBlock.innerHTML = code;
+    let codeBlockBg = document.getElementById("code-block-bg");
+    codeBlockBg.innerHTML = code;
 
     // - file name
     document
