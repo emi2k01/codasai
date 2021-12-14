@@ -36,10 +36,16 @@ function applyState(state) {
             let code = codeBgEl.innerText;
 
             let fromIdx = code.search(fromRegex);
+            if (fromIdx == -1) {
+                return;
+            }
             // we start searching after `fromIdx` but we need the index to be
             // based on the whole code so we add the `fromIdx` (plus 1 'cause
             // 0-based)
             let toIdx = code.substring(fromIdx+1).search(toRegex) + fromIdx+1;
+            if (toIdx == -1) {
+                return;
+            }
 
             let codeHtmlHighlighted = code.substring(0, fromIdx);
             codeHtmlHighlighted += "<span class='highlight'>";
