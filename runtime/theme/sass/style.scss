@@ -60,6 +60,7 @@ header {
     display: flex;
     color: $white;
     min-height: 0;
+    flex-grow: 1;
 
     & > * + * {
         margin-left: 10px;
