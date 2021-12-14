@@ -86,6 +86,7 @@ function openFile(filePath, callback) {
 }
 
 function updateCodeView(fileName, code) {
+    document.getElementById("file-viewer").classList.remove("closed");
     // - content
     let codeBlock = document.getElementById("code-block");
     codeBlock.innerHTML = code;

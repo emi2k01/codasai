@@ -35,7 +35,7 @@ class State {
 
 export function parseState(state) {
     let chars = [];
-    
+
     for (const char of state) {
         chars.push(char);
     }
@@ -75,7 +75,7 @@ export function parseState(state) {
         if (tokens[1].kind != TOKEN_KIND_EQUALS) {
             throw new Error(`expected equals but got \`${tokens[1].value}\``);
         }
-        
+
         if (tokens[2].kind != TOKEN_KIND_STRING) {
             throw new Error(`expected string argument but got \`${tokens[2].value}\``);
         }
@@ -85,13 +85,13 @@ export function parseState(state) {
 
         tokens = tokens.slice(3);
     }
-    
+
     return new State(action.value, args);
 }
 
 function eatTrivia(chars) {
     let i = 0;
-    
+
     for (i = 0; i < chars.length; i++) {
         if (chars[i] != " " && chars[i] != "/" && chars[i] != "," && chars[i] != "?") {
             break;
