@@ -67,7 +67,7 @@ header {
     }
 
     #page {
-        min-width: calc(35% - 10px);
+        flex-grow: 1;
         padding: 1.5em;
         overflow-y: auto;
     }
