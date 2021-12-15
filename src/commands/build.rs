@@ -156,7 +156,13 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
             if blob.is_binary() {
                 std::fs::write(&out_path, "BINARY FILE").unwrap();
             } else {
-                let content = String::from_utf8(blob.content().to_vec()).unwrap();
+                let content_unsafe = String::from_utf8(blob.content().to_vec()).unwrap();
+                let ext = relative_path.extension().unwrap_or_default();
+                let content = crate::code::escape_and_highlight(
+                    &content_unsafe,
+                    ext.to_string_lossy().as_ref(),
+                );
+
                 std::fs::write(&out_path, &content).unwrap();
             }
         }
