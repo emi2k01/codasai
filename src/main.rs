@@ -1,8 +1,12 @@
+mod code;
 mod commands;
-pub mod paths;
+mod exporter;
+mod html;
+mod page;
+mod paths;
 
 use anyhow::Result;
-use commands::{init, preview};
+use commands::{build, init, preview};
 use env_logger::Env;
 use structopt::StructOpt;
 
@@ -12,6 +16,8 @@ enum Args {
     Init(init::Opts),
     /// Preview the current unsaved page
     Preview(preview::Opts),
+    /// Build the guide
+    Build(build::Opts),
 }
 
 fn main() -> Result<()> {
@@ -22,5 +28,6 @@ fn main() -> Result<()> {
     match args {
         Args::Init(ref opts) => init::execute(opts),
         Args::Preview(ref opts) => preview::execute(opts),
+        Args::Build(ref opts) => build::execute(opts),
     }
 }
