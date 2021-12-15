@@ -1,4 +1,4 @@
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -138,7 +138,17 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
             && entry.to_object(repo).unwrap().kind() == Some(git2::ObjectType::Blob)
         {
             let relative_path = path.strip_prefix("workspace").unwrap();
-            let out_path = workspace.join(&relative_path);
+            let mut out_path = workspace.join(&relative_path);
+
+            let new_ext = if let Some(ext) = out_path.extension() {
+                let mut new_ext = ext.to_os_string();
+                new_ext.push(".html");
+                new_ext
+            } else {
+                OsString::from("html")
+            };
+            out_path.set_extension(new_ext);
+
             std::fs::create_dir_all(out_path.parent().unwrap()).unwrap();
 
             let object = entry.to_object(repo).unwrap();
