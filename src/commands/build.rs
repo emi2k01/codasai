@@ -4,7 +4,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
-use crate::exporter::WorkspaceOutlineBuilder;
+use crate::exporter::{Directory, WorkspaceOutlineBuilder};
 use crate::page::PageContext;
 use crate::paths;
 
@@ -53,10 +53,14 @@ pub fn execute(_opts: &Opts) -> Result<()> {
         std::fs::create_dir_all(&export_dir)
             .with_context(|| format!("failed to create dir {:?}", &export_dir))?;
 
-        render_page(&project, &export_dir, &page)?;
+        let tree = repo.find_commit(rev)?.tree()?;
+
+        let workspace_outline =
+            build_workspace_outline(&repo, &tree).context("failed to build workspace outline")?;
+
+        render_page(&project, &export_dir, &page, workspace_outline)?;
 
         let workspace_dir = export_dir.join("workspace");
-        let tree = repo.find_commit(rev)?.tree()?;
         render_workspace(&repo, &tree, &workspace_dir)?;
 
         last_rev = Some(rev);
@@ -152,7 +156,9 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
     Ok(())
 }
 
-fn render_page(project: &Path, export_dir: &Path, page: &str) -> Result<()> {
+fn render_page(
+    project: &Path, export_dir: &Path, page: &str, workspace_outline: Directory,
+) -> Result<()> {
     let title = crate::page::extract_title(&page);
     let page_html = crate::page::to_html(&page);
     let tera_engine = crate::page::read_templates(&project).context("failed to read templates")?;
@@ -160,7 +166,7 @@ fn render_page(project: &Path, export_dir: &Path, page: &str) -> Result<()> {
     let page_context = PageContext {
         title,
         content: page_html,
-        workspace: WorkspaceOutlineBuilder::new().finish(),
+        workspace: workspace_outline,
     };
 
     let mut context = tera::Context::new();
@@ -175,4 +181,40 @@ fn render_page(project: &Path, export_dir: &Path, page: &str) -> Result<()> {
         .with_context(|| format!("failed to write to {:?}", &out_path))?;
 
     Ok(())
+}
+
+fn build_workspace_outline(repo: &git2::Repository, tree: &git2::Tree) -> Result<Directory> {
+    let mut ws_builder = WorkspaceOutlineBuilder::new();
+    tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {
+        let parent = Path::new(parent);
+        let path = parent.join(entry.name().unwrap());
+
+        // we subtract one so that `workspace/` has depth 0, `workspace/something.txt`
+        // has depth 1, etc
+        let depth = path.components().count() - 1;
+
+        if path.starts_with("workspace") && depth > 0 {
+            // if the entry is a file
+            if entry
+                .to_object(repo)
+                .map(|o| o.kind() == Some(git2::ObjectType::Blob))
+                == Ok(true)
+            {
+                ws_builder.push_file(
+                    entry.name().unwrap().to_string(),
+                    path.strip_prefix("workspace")
+                        .unwrap()
+                        .display()
+                        .to_string(),
+                    depth as i32,
+                );
+            } else {
+                ws_builder.push_dir(entry.name().unwrap().to_string(), depth as i32);
+            }
+        }
+
+        git2::TreeWalkResult::Ok
+    })?;
+
+    Ok(ws_builder.finish())
 }

@@ -65,7 +65,7 @@ impl WorkspaceOutlineBuilder {
         self.dirs.last_mut().unwrap().directories.push(last_dir);
     }
 
-    pub fn push_file(&mut self, name: String, parent: String, depth: i32) {
+    pub fn push_file(&mut self, name: String, path: String, depth: i32) {
         if depth <= self.depth {
             for _ in depth..=self.depth {
                 self.pop_dir();
@@ -76,10 +76,13 @@ impl WorkspaceOutlineBuilder {
             .last_mut()
             .unwrap()
             .files
-            .push(File::new(name, depth, parent));
+            .push(File::new(name, depth, path));
     }
 
     pub fn finish(mut self) -> Directory {
+        for _ in 0..self.depth {
+            self.pop_dir();
+        }
         self.dirs.pop().unwrap()
     }
 }
