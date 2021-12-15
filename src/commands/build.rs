@@ -1,14 +1,17 @@
-use std::path::{Path, PathBuf};
+use std::ffi::OsStr;
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
+use crate::exporter::WorkspaceOutlineBuilder;
+use crate::page::PageContext;
 use crate::paths;
 
 #[derive(StructOpt)]
 pub struct Opts {}
 
-pub fn execute(opts: &Opts) -> Result<()> {
+pub fn execute(_opts: &Opts) -> Result<()> {
     let project = paths::project()?;
     let repo = git2::Repository::open(&project)
         .with_context(|| format!("failed to open repository at {:?}", &project))?;
@@ -26,43 +29,51 @@ pub fn execute(opts: &Opts) -> Result<()> {
 
     let mut page_num = 0;
 
+    let mut last_rev = None;
     for rev in revwalk {
         let rev = rev.context("failed to retrieve rev")?;
+
+        let page = if let Some(last_rev) = last_rev {
+            if let Some(new_page) = find_new_page(&repo, last_rev, rev)? {
+                new_page
+            } else {
+                // if there's no new page, then we skip this revision
+                continue;
+            }
+        } else {
+            if let Some(first_page) = find_first_page(&repo, rev)? {
+                first_page
+            } else {
+                // if there's no page, then we skip this revision
+                continue;
+            }
+        };
+
+        let export_dir = project.join(format!(".codasai/export/{}", page_num));
+        std::fs::create_dir_all(&export_dir)
+            .with_context(|| format!("failed to create dir {:?}", &export_dir))?;
+
+        render_page(&project, &export_dir, &page)?;
+
+        let workspace_dir = export_dir.join("workspace");
         let tree = repo.find_commit(rev)?.tree()?;
+        render_workspace(&repo, &tree, &workspace_dir)?;
 
-        let mut is_rev_relevant = false;
-        tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {
-            let path = Path::new(parent).join(entry.name().expect("expected a UTF-8 valid name"));
-
-            if path.starts_with("workspace") || path.starts_with("pages") {
-                is_rev_relevant = true;
-            }
-
-            if path.starts_with("workspace") {
-                let out_root = PathBuf::from(format!(".codasai/export/{}/", page_num));
-                let out_path = out_root.join(path);
-                std::fs::create_dir_all(out_path.parent().unwrap()).unwrap();
-            }
-
-            git2::TreeWalkResult::Ok
-        })?;
-
-        if is_rev_relevant {
-            page_num += 1;
-        }
+        last_rev = Some(rev);
+        page_num += 1;
     }
 
     Ok(())
 }
 
-fn find_first_page(repo: &git2::Repository, rev: git2::Oid) -> Result<String> {
+fn find_first_page(repo: &git2::Repository, rev: git2::Oid) -> Result<Option<String>> {
     let tree = repo.find_commit(rev)?.tree()?;
 
     let mut page = None;
     tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {
         let path = Path::new(parent).join(entry.name().expect("expected a valid UTF-8 valid name"));
 
-        if path.starts_with("pages") {
+        if path.starts_with("pages") && path.extension() == Some(&OsStr::new("md")) {
             page = Some(
                 String::from_utf8(
                     entry
@@ -80,7 +91,7 @@ fn find_first_page(repo: &git2::Repository, rev: git2::Oid) -> Result<String> {
         git2::TreeWalkResult::Ok
     })?;
 
-    page.ok_or(anyhow::anyhow!("failed to find page in commit"))
+    Ok(page)
 }
 
 fn find_new_page(
@@ -89,7 +100,7 @@ fn find_new_page(
     let old_tree = repo.find_commit(old_rev)?.tree()?;
     let new_tree = repo.find_commit(new_rev)?.tree()?;
 
-    let diff = repo.diff_tree_to_tree(Some(&old_tree), Some(&old_tree), None)?;
+    let diff = repo.diff_tree_to_tree(Some(&old_tree), Some(&new_tree), None)?;
     for delta in diff.deltas() {
         match delta.status() {
             git2::Delta::Added => {
@@ -113,6 +124,55 @@ fn find_new_page(
     Ok(None)
 }
 
-fn render_workspace(out_dir: &Path, tree: git2::Tree) -> Result<()> {
-    todo!()
+fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path) -> Result<()> {
+    std::fs::create_dir_all(workspace)
+        .with_context(|| format!("failed to create directory {:?}", workspace))?;
+
+    tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {
+        let path = Path::new(parent).join(entry.name().unwrap());
+        if path.starts_with("workspace")
+            && entry.to_object(repo).unwrap().kind() == Some(git2::ObjectType::Blob)
+        {
+            let relative_path = path.strip_prefix("workspace").unwrap();
+            let out_path = workspace.join(&relative_path);
+            std::fs::create_dir_all(out_path.parent().unwrap()).unwrap();
+
+            let object = entry.to_object(repo).unwrap();
+            let blob = object.as_blob().unwrap();
+            if blob.is_binary() {
+                std::fs::write(&out_path, "BINARY FILE").unwrap();
+            } else {
+                let content = String::from_utf8(blob.content().to_vec()).unwrap();
+                std::fs::write(&out_path, &content).unwrap();
+            }
+        }
+        git2::TreeWalkResult::Ok
+    })?;
+
+    Ok(())
+}
+
+fn render_page(project: &Path, export_dir: &Path, page: &str) -> Result<()> {
+    let title = crate::page::extract_title(&page);
+    let page_html = crate::page::to_html(&page);
+    let tera_engine = crate::page::read_templates(&project).context("failed to read templates")?;
+
+    let page_context = PageContext {
+        title,
+        content: page_html,
+        workspace: WorkspaceOutlineBuilder::new().finish(),
+    };
+
+    let mut context = tera::Context::new();
+    context.insert("page", &page_context);
+
+    let output_html = tera_engine
+        .render("template.html", &context)
+        .context("failed to render template")?;
+
+    let out_path = export_dir.join("index.html");
+    std::fs::write(&out_path, output_html)
+        .with_context(|| format!("failed to write to {:?}", &out_path))?;
+
+    Ok(())
 }

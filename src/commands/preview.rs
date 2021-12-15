@@ -3,20 +3,13 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use git2::Status;
-use serde::Serialize;
 use structopt::StructOpt;
 use tera::Tera;
 use walkdir::WalkDir;
 
+use crate::code;
 use crate::exporter::{self, Directory, WorkspaceOutlineBuilder};
-use crate::{code, page};
-
-#[derive(Serialize)]
-struct PageContext {
-    title: String,
-    content: String,
-    workspace: Directory,
-}
+use crate::page::{self, PageContext};
 
 #[derive(StructOpt)]
 pub struct Opts {
@@ -50,7 +43,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
     exporter::setup_public_files(&project)?;
     render_workspace(&project).context("failed to render workspace")?;
 
-    let template_engine = read_templates(&project)?;
+    let template_engine = page::read_templates(&project)?;
     render_page(&project, template_engine).context("failed to render page")?;
 
     if !opts.no_run_server {
@@ -182,17 +175,6 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
         .with_context(|| format!("failed to write to {:?}", &preview_path))?;
 
     Ok(())
-}
-
-fn read_templates(project: &Path) -> Result<Tera> {
-    let templates_dir = project.join(".codasai/theme/templates");
-    let mut templates_glob = templates_dir
-        .to_str()
-        .ok_or(anyhow::anyhow!("templates path is not valid UTF-8"))?
-        .to_string();
-    templates_glob.push_str("/*.html");
-
-    Tera::new(&templates_glob).context("failed to build template engine")
 }
 
 pub fn render_page(project: &Path, template_engine: Tera) -> Result<()> {

@@ -3,27 +3,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use serde::Serialize;
-use tera::Tera;
 use walkdir::WalkDir;
-
-struct PageExporter<'a> {
-    pub id: i32,
-    pub dir: &'a Path,
-}
-
-impl<'a> PageExporter<'a> {
-    pub fn new(id: i32, dir: &'a Path) -> Self {
-        Self { id, dir }
-    }
-
-    pub fn write_file(&self, path: &'a Path, contents: &str) -> Result<()> {
-        std::fs::write(self.dir.join(path), contents).map_err(Into::into)
-    }
-
-    pub fn write_binary_file(&self, path: &'a Path) -> Result<()> {
-        self.write_file(path, "BINARY FILE")
-    }
-}
 
 #[derive(Debug, Serialize)]
 struct File {

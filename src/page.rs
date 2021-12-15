@@ -1,4 +1,18 @@
+use std::path::Path;
+
+use anyhow::{Context, Result};
 use pulldown_cmark::Parser;
+use serde::Serialize;
+use tera::Tera;
+
+use crate::exporter::Directory;
+
+#[derive(Serialize)]
+pub struct PageContext {
+    pub title: String,
+    pub content: String,
+    pub workspace: Directory,
+}
 
 pub fn to_html(markdown: &str) -> String {
     let parser = markdown_parser(&markdown);
@@ -31,4 +45,15 @@ pub fn extract_title(page: &str) -> String {
     }
 
     return String::from("Untitled");
+}
+
+pub fn read_templates(project: &Path) -> Result<Tera> {
+    let templates_dir = project.join(".codasai/theme/templates");
+    let mut templates_glob = templates_dir
+        .to_str()
+        .ok_or(anyhow::anyhow!("templates path is not valid UTF-8"))?
+        .to_string();
+    templates_glob.push_str("/*.html");
+
+    Tera::new(&templates_glob).context("failed to build template engine")
 }
