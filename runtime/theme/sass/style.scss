@@ -41,6 +41,11 @@ header {
             color: $white;
             text-decoration: none;
 
+            &.disabled {
+                color: transparentize($white, 0.5);
+                background-color: darken($color: $medium-color, $amount: 10%);
+            }
+
             &:nth-child(1) {
                 border-radius: 5px 0 0 5px;
             }
@@ -49,7 +54,7 @@ header {
                 border-radius: 0 5px 5px 0;
             }
 
-            &:hover {
+            &:not(.disabled):hover {
                 background-color: darken($color: $medium-color, $amount: 5%);
             }
         }
@@ -224,6 +229,10 @@ header {
     & > * {
         background-color: $dark-color;
     }
+}
+
+a.disabled {
+    pointer-events: none;
 }
 
 @import './markdown.scss';

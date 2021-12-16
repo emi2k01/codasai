@@ -129,10 +129,20 @@ function lineNumberTemplate(line) {
     return `<a href=\"#\">${line}</a>\n`;
 }
 
+function disableDisabledAnchors() {
+    let anchors = document.querySelectorAll("a.disabled");
+    for (let i = 0; i < anchors.length; i++) {
+        anchors[i].addEventListener("click", function(e) {
+            e.preventDefault();
+        });
+    }
+}
+
 function main() {
     applyStateFromHash();
     addLinkEvents();
     addDirectoryButtonsEvents();
+    disableDisabledAnchors();
 }
 
 main();

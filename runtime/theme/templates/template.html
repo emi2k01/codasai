@@ -12,12 +12,20 @@
     <title>{{ page.title }}</title>
 </head>
 
-<body data-workspace-url="/preview/workspace">
+<body data-workspace-url="{{ page.page_url }}/workspace">
     <div id="wrapper">
         <header>
             <div>
-                <a href="#" title="TODO">←</a>
-                <a href="#" title="TODO">→</a>
+                {% if page.previous_page != -1 %}
+                    <a href="{{ page.root_url }}{{ page.previous_page }}" title="TODO">←</a>
+                {% else %}
+                    <a href="#" title="TODO" class="disabled" aria-hidden="true">←</a>
+                {% endif %}
+                {% if page.next_page != -1 %}
+                    <a href="{{ page.root_url }}{{ page.next_page }}" title="TODO">→</a>
+                {% else %}
+                    <a href="#" title="TODO" class="disabled" aria-hidden="true">→</a>
+                {% endif %}
             </div>
         </header>
         <div class="three-columns">
