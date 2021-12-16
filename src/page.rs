@@ -12,6 +12,10 @@ pub struct PageContext {
     pub title: String,
     pub content: String,
     pub workspace: Directory,
+    pub root_url: String,
+    pub page_url: String,
+    pub previous_page: i32,
+    pub next_page: i32,
 }
 
 pub fn to_html(markdown: &str) -> String {

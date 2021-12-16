@@ -1,5 +1,5 @@
 use std::ffi::{OsStr, OsString};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use structopt::StructOpt;
@@ -28,6 +28,7 @@ pub fn execute(_opts: &Opts) -> Result<()> {
         .context("failed to push repository head")?;
 
     let mut page_num = 0;
+    let total_pages = count_pages(&project);
 
     let mut last_rev = None;
     for rev in revwalk {
@@ -58,7 +59,16 @@ pub fn execute(_opts: &Opts) -> Result<()> {
         let workspace_outline =
             build_workspace_outline(&repo, &tree).context("failed to build workspace outline")?;
 
-        render_page(&project, &export_dir, &page, workspace_outline)?;
+        let is_last = page_num == total_pages - 1;
+        render_page(
+            &project,
+            "/".to_string(),
+            &export_dir,
+            &page,
+            workspace_outline,
+            page_num as i32,
+            is_last,
+        )?;
 
         let workspace_dir = export_dir.join("workspace");
         render_workspace(&repo, &tree, &workspace_dir)?;
@@ -173,16 +183,31 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
 }
 
 fn render_page(
-    project: &Path, export_dir: &Path, page: &str, workspace_outline: Directory,
+    project: &Path, root_url: String, out_dir: &Path, page: &str, workspace_outline: Directory,
+    page_num: i32, last: bool,
 ) -> Result<()> {
     let title = crate::page::extract_title(&page);
     let page_html = crate::page::to_html(&page);
     let tera_engine = crate::page::read_templates(&project).context("failed to read templates")?;
 
+    let previous_page = if page_num == 0 { -1 } else { page_num - 1 };
+    let next_page = if last { -1 } else { page_num + 1 };
+
     let page_context = PageContext {
         title,
         content: page_html,
         workspace: workspace_outline,
+        previous_page,
+        next_page,
+        root_url,
+        page_url: PathBuf::from("/")
+            .join(
+                out_dir
+                    .strip_prefix(project.join(".codasai/export"))
+                    .unwrap(),
+            )
+            .display()
+            .to_string(),
     };
 
     let mut context = tera::Context::new();
@@ -192,7 +217,7 @@ fn render_page(
         .render("template.html", &context)
         .context("failed to render template")?;
 
-    let out_path = export_dir.join("index.html");
+    let out_path = dbg!(out_dir.join("index.html"));
     std::fs::write(&out_path, output_html)
         .with_context(|| format!("failed to write to {:?}", &out_path))?;
 
@@ -233,4 +258,22 @@ fn build_workspace_outline(repo: &git2::Repository, tree: &git2::Tree) -> Result
     })?;
 
     Ok(ws_builder.finish())
+}
+
+fn count_pages(project: &Path) -> usize {
+    let pages = project.join("pages");
+
+    let walker = walkdir::WalkDir::new(&pages).into_iter().filter_map(|e| {
+        match e {
+            Ok(entry) => Some(entry),
+            Err(err) => {
+                log::warn!("failed to read entry {:?}", err);
+                None
+            },
+        }
+    });
+
+    walker
+        .filter(|e| e.file_type().is_file() && e.path().starts_with(&pages))
+        .count()
 }

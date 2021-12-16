@@ -213,6 +213,10 @@ pub fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
         title,
         content: page_html,
         workspace: build_workspace_tree(&project)?,
+        root_url: "/".to_string(),
+        page_url: "/preview/workspace".to_string(),
+        previous_page: -1,
+        next_page: -1,
     };
 
     let mut context = tera::Context::new();
