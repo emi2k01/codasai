@@ -9,9 +9,12 @@ use crate::page::PageContext;
 use crate::paths;
 
 #[derive(StructOpt)]
-pub struct Opts {}
+pub struct Opts {
+    #[structopt(long, default_value = "/")]
+    base_url: String,
+}
 
-pub fn execute(_opts: &Opts) -> Result<()> {
+pub fn execute(opts: &Opts) -> Result<()> {
     let project = paths::project()?;
     let repo = git2::Repository::open(&project)
         .with_context(|| format!("failed to open repository at {:?}", &project))?;
@@ -62,7 +65,7 @@ pub fn execute(_opts: &Opts) -> Result<()> {
         let is_last = page_num == total_pages - 1;
         render_page(
             &project,
-            "/".to_string(),
+            opts.base_url.clone(),
             &export_dir,
             &page,
             workspace_outline,
@@ -183,7 +186,7 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
 }
 
 fn render_page(
-    project: &Path, root_url: String, out_dir: &Path, page: &str, workspace_outline: Directory,
+    project: &Path, base_url: String, out_dir: &Path, page: &str, workspace_outline: Directory,
     page_num: i32, last: bool,
 ) -> Result<()> {
     let title = crate::page::extract_title(&page);
@@ -199,7 +202,7 @@ fn render_page(
         workspace: workspace_outline,
         previous_page,
         next_page,
-        root_url,
+        base_url,
         page_url: PathBuf::from("/")
             .join(
                 out_dir
@@ -217,7 +220,7 @@ fn render_page(
         .render("template.html", &context)
         .context("failed to render template")?;
 
-    let out_path = dbg!(out_dir.join("index.html"));
+    let out_path = out_dir.join("index.html");
     std::fs::write(&out_path, output_html)
         .with_context(|| format!("failed to write to {:?}", &out_path))?;
 

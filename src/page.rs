@@ -12,7 +12,7 @@ pub struct PageContext {
     pub title: String,
     pub content: String,
     pub workspace: Directory,
-    pub root_url: String,
+    pub base_url: String,
     pub page_url: String,
     pub previous_page: i32,
     pub next_page: i32,
@@ -59,5 +59,29 @@ pub fn read_templates(project: &Path) -> Result<Tera> {
         .to_string();
     templates_glob.push_str("/*.html");
 
-    Tera::new(&templates_glob).context("failed to build template engine")
+    let mut engine = Tera::new(&templates_glob).context("failed to build template engine")?;
+    engine.register_filter(
+        "url_join",
+        |base_url: &tera::Value, args: &std::collections::HashMap<String, tera::Value>| {
+            if let Some(with) = args.get("with") {
+                match base_url {
+                    tera::Value::String(base_url) => {
+                        Ok(tera::Value::from(
+                            Path::new(&base_url)
+                                .join(with.to_string())
+                                .display()
+                                .to_string(),
+                        ))
+                    },
+                    _ => return Err(tera::Error::msg("expected argument of type `string`")),
+                }
+            } else {
+                Err(tera::Error::msg(
+                    "expected argument `with` of type `string`",
+                ))
+            }
+        },
+    );
+
+    Ok(engine)
 }
