@@ -1,5 +1,5 @@
 use std::ffi::{OsStr, OsString};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use structopt::StructOpt;
@@ -19,6 +19,10 @@ pub fn execute(opts: &Opts) -> Result<()> {
     let repo = git2::Repository::open(&project)
         .with_context(|| format!("failed to open repository at {:?}", &project))?;
 
+    exporter::setup_public_files(&project)?;
+
+    // 
+    // - Export every revision
     let mut revwalk = repo.revwalk().with_context(|| {
         format!(
             "failed to create rev walker for repository at {:?}",
@@ -53,7 +57,6 @@ pub fn execute(opts: &Opts) -> Result<()> {
             }
         };
 
-        exporter::setup_public_files(&project)?;
         let export_dir = project.join(format!(".codasai/export/{}", page_num));
         std::fs::create_dir_all(&export_dir)
             .with_context(|| format!("failed to create dir {:?}", &export_dir))?;
