@@ -52,6 +52,10 @@ pub fn extract_title(page: &str) -> String {
 }
 
 pub fn read_templates(project: &Path) -> Result<Tera> {
+    use std::collections::HashMap;
+
+    use tera::Value;
+
     let templates_dir = project.join(".codasai/theme/templates");
     let mut templates_glob = templates_dir
         .to_str()
@@ -60,26 +64,32 @@ pub fn read_templates(project: &Path) -> Result<Tera> {
     templates_glob.push_str("/*.html");
 
     let mut engine = Tera::new(&templates_glob).context("failed to build template engine")?;
+
     engine.register_filter(
         "url_join",
-        |base_url: &tera::Value, args: &std::collections::HashMap<String, tera::Value>| {
-            if let Some(with) = args.get("with") {
-                match base_url {
-                    tera::Value::String(base_url) => {
-                        Ok(tera::Value::from(
-                            Path::new(&base_url)
-                                .join(with.to_string())
-                                .display()
-                                .to_string(),
-                        ))
-                    },
-                    _ => return Err(tera::Error::msg("expected argument of type `string`")),
-                }
-            } else {
-                Err(tera::Error::msg(
-                    "expected argument `with` of type `string`",
-                ))
-            }
+        |base_url: &Value, args: &HashMap<String, Value>| {
+            let base_url = match base_url {
+                &Value::String(ref v) => v.clone(),
+                &Value::Number(ref v) => v.to_string(),
+                _ => return Err(tera::Error::msg("expected base url to be of type `string`")),
+            };
+
+            let with = match args.get("with") {
+                Some(&Value::String(ref v)) => v.clone(),
+                Some(&Value::Number(ref v)) => v.to_string(),
+                Some(_) => {
+                    return Err(tera::Error::msg(
+                        "expected argument `with` to be of type `string` or `number`",
+                    ))
+                },
+                None => {
+                    return Err(tera::Error::msg(
+                        "expected argument `with` of type `string` or `number`",
+                    ))
+                },
+            };
+
+            Ok(Path::new(&base_url).join(with).display().to_string().into())
         },
     );
 

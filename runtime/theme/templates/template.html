@@ -12,7 +12,7 @@
     <title>{{ page.title }}</title>
 </head>
 
-<body data-workspace-url="{{ page.base_url | url_join(with=page.previous_page) }}">
+<body data-workspace-url='{{ page.page_url | url_join(with="workspace") }}'>
     <div id="wrapper">
         <header>
             <div>
