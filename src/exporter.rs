@@ -88,6 +88,9 @@ impl WorkspaceOutlineBuilder {
 }
 
 pub fn setup_public_files(project: &Path) -> Result<()> {
+    std::fs::remove_dir_all(project.join(".codasai/export/public"))
+        .context("failed to remove public dir")?;
+
     copy_user_public_dir(&project).context("failed to export public directory")?;
     copy_theme_public_dir(&project).context("failed to export theme public directory")?;
     compile_sass(&project).context("failed to render sass files")?;
