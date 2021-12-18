@@ -203,8 +203,7 @@ fn render_page(
         workspace: workspace_outline,
         previous_page,
         next_page,
-        base_url,
-        page_url: PathBuf::from("/")
+        page_url: Path::new(&base_url)
             .join(
                 out_dir
                     .strip_prefix(project.join(".codasai/export"))
@@ -212,6 +211,7 @@ fn render_page(
             )
             .display()
             .to_string(),
+        base_url,
     };
 
     let mut context = tera::Context::new();
