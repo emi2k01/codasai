@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
-use crate::exporter::{Directory, WorkspaceOutlineBuilder};
+use crate::exporter::{self, Directory, WorkspaceOutlineBuilder};
 use crate::page::PageContext;
 use crate::paths;
 
@@ -53,6 +53,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
             }
         };
 
+        exporter::setup_public_files(&project)?;
         let export_dir = project.join(format!(".codasai/export/{}", page_num));
         std::fs::create_dir_all(&export_dir)
             .with_context(|| format!("failed to create dir {:?}", &export_dir))?;
