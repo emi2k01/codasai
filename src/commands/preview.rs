@@ -54,7 +54,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
 }
 
 fn launch_server(export_dir: &Path, open: bool) {
-    tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_multi_thread()
         .enable_time()
         .enable_io()
         .build()
@@ -214,7 +214,7 @@ pub fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
         content: page_html,
         workspace: build_workspace_tree(&project)?,
         base_url: "/".to_string(),
-        page_url: "/preview/workspace".to_string(),
+        page_url: "/preview".to_string(),
         previous_page: -1,
         next_page: -1,
     };
