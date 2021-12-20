@@ -91,8 +91,7 @@ pub fn setup_public_files(project: &Path) -> Result<()> {
     let public_dir = project.join(".codasai/export/public");
 
     if public_dir.exists() {
-        std::fs::remove_dir_all(&public_dir)
-            .context("failed to remove public dir")?;
+        std::fs::remove_dir_all(&public_dir).context("failed to remove public dir")?;
     }
 
     copy_user_public_dir(&project).context("failed to export public directory")?;
