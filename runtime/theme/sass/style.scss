@@ -149,16 +149,20 @@ header {
                     }
 
                     &#code-block-bg {
+                        overflow: hidden;
                         position: absolute;
                         left: 0;
                         top: 0;
-                        color: transparent;
                         width: 100%;
 
                         .highlight {
                             width: 100%;
                             display: inline-block;
                             background-color: rgba(214, 189, 221, 0.4);
+                        }
+
+                        * {
+                            color: transparent !important;
                         }
                     }
                 }
