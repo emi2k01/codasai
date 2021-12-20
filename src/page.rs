@@ -89,7 +89,14 @@ pub fn read_templates(project: &Path) -> Result<Tera> {
                 },
             };
 
-            Ok(Path::new(&base_url).join(with).display().to_string().into())
+            let with = Path::new(&with);
+            let relative_with = if with.has_root() {
+                with.strip_prefix("/").expect("path should've started with root")
+            } else {
+                with
+            };
+
+            Ok(Path::new(&base_url).join(relative_with).display().to_string().into())
         },
     );
 
