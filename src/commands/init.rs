@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
+static THEME_DIR: include_dir::Dir<'_> = include_dir::include_dir!("runtime/theme");
+
 #[derive(StructOpt)]
 pub struct Opts {
     /// Title of the guide
@@ -31,6 +33,15 @@ pub fn execute(opts: &Opts) -> Result<()> {
     let guide_toml = dotcodasai.join("guide.toml");
     let title = escape_toml_string(&opts.title);
     std::fs::write(&guide_toml, format!("title = \"{}\"", title))?;
+
+    std::fs::create_dir(path.join("public")).context("failed to create `public/` directory")?;
+    std::fs::create_dir(path.join("workspace"))
+        .context("failed to create `workspace/` directory")?;
+    std::fs::create_dir(path.join("pages")).context("failed to create `pages/` directory")?;
+
+    THEME_DIR
+        .extract(path.join(".codasai/theme"))
+        .context("failed to extract default theme to `.codasai/theme/`")?;
 
     Ok(())
 }

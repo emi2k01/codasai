@@ -184,10 +184,12 @@ pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
 
     let mut page = None;
     for status in statuses.iter() {
-        let path = status.path().ok_or_else(|| anyhow::anyhow!(
-            "path is not valid utf-8: {:?}",
-            String::from_utf8_lossy(status.path_bytes())
-        ))?;
+        let path = status.path().ok_or_else(|| {
+            anyhow::anyhow!(
+                "path is not valid utf-8: {:?}",
+                String::from_utf8_lossy(status.path_bytes())
+            )
+        })?;
 
         let path = PathBuf::from(path);
         if status.status() == Status::WT_NEW
