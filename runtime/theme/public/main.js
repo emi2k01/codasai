@@ -47,9 +47,9 @@ function applyState(state) {
                 return;
             }
 
-            let codeHtmlHighlighted = code.substring(0, fromIdx);
+            let codeHtmlHighlighted = escapeHtml(code.substring(0, fromIdx));
             codeHtmlHighlighted += "<span class='highlight'>";
-            codeHtmlHighlighted += code.substring(fromIdx, toIdx+1);
+            codeHtmlHighlighted += escapeHtml(code.substring(fromIdx, toIdx+1));
             codeHtmlHighlighted += "</span>";
             // we don't need the rest of the code since we only use the code
             // for alignment
@@ -144,5 +144,15 @@ function main() {
     addDirectoryButtonsEvents();
     disableDisabledAnchors();
 }
+
+function escapeHtml(unsafe)
+{
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
 
 main();
