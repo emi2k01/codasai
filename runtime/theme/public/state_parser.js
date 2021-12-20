@@ -110,7 +110,7 @@ function tokenizeString(chars, tokens) {
         if (escaping) { // escape sequences
             switch (chars[i]) {
                 case "\"":
-                case "\\":
+                case "~":
                     value += chars[i];
                     escaping = false;
                     break;
@@ -119,7 +119,7 @@ function tokenizeString(chars, tokens) {
             }
         } else if (chars[i] == "\"") { // string end
             break;
-        } else if (chars[i] == "\\") { // escape sequence start
+        } else if (chars[i] == "~") { // escape sequence start
             escaping = true;
         } else { // other
             value += chars[i];
