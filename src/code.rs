@@ -30,7 +30,7 @@ pub fn escape_and_highlight(code: &str, ext: &str) -> String {
 
             html_generator.finalize()
         } else {
-            html::escape(&code)
+            html::escape(code)
         }
     })
 }

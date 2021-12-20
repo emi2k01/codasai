@@ -94,9 +94,9 @@ pub fn setup_public_files(project: &Path) -> Result<()> {
         std::fs::remove_dir_all(&public_dir).context("failed to remove public dir")?;
     }
 
-    copy_user_public_dir(&project).context("failed to export public directory")?;
-    copy_theme_public_dir(&project).context("failed to export theme public directory")?;
-    compile_sass(&project).context("failed to render sass files")?;
+    copy_user_public_dir(project).context("failed to export public directory")?;
+    copy_theme_public_dir(project).context("failed to export theme public directory")?;
+    compile_sass(project).context("failed to render sass files")?;
 
     Ok(())
 }
@@ -122,7 +122,7 @@ pub fn compile_sass(project: &Path) -> Result<()> {
                     .unwrap()
                     .to_str()
                     .unwrap()
-                    .starts_with("_")
+                    .starts_with('_')
         });
 
     for entry in walkdir {

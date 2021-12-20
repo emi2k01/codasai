@@ -44,7 +44,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
     render_workspace(&project).context("failed to render workspace")?;
 
     let template_engine = page::read_templates(&project)?;
-    render_page(&project, template_engine).context("failed to render page")?;
+    render_page(&project, &template_engine).context("failed to render page")?;
 
     if !opts.no_run_server {
         launch_server(&export_dir, !opts.no_open);
@@ -104,7 +104,7 @@ fn build_workspace_tree(project: &Path) -> Result<Directory> {
                 entry.file_name().to_str().unwrap().to_string(),
                 entry.path().strip_prefix(&workspace)?.display().to_string(),
                 entry.depth() as i32,
-            )
+            );
         }
     }
 
@@ -177,14 +177,14 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
     Ok(())
 }
 
-pub fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
+pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
     let repo = git2::Repository::open(project)
         .with_context(|| format!("failed to open Git repository at {:?}", project))?;
     let statuses = repo.statuses(None).context("failed to get Git status")?;
 
     let mut page = None;
     for status in statuses.iter() {
-        let path = status.path().ok_or(anyhow::anyhow!(
+        let path = status.path().ok_or_else(|| anyhow::anyhow!(
             "path is not valid utf-8: {:?}",
             String::from_utf8_lossy(status.path_bytes())
         ))?;
@@ -212,7 +212,7 @@ pub fn render_page(project: &Path, template_engine: Tera) -> Result<()> {
     let page_context = PageContext {
         title,
         content: page_html,
-        workspace: build_workspace_tree(&project)?,
+        workspace: build_workspace_tree(project)?,
         base_url: "/".to_string(),
         page_url: "/preview".to_string(),
         previous_page: -1,

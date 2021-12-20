@@ -48,13 +48,11 @@ pub fn execute(opts: &Opts) -> Result<()> {
                 // if there's no new page, then we skip this revision
                 continue;
             }
+        } else if let Some(first_page) = find_first_page(&repo, rev)? {
+            first_page
         } else {
-            if let Some(first_page) = find_first_page(&repo, rev)? {
-                first_page
-            } else {
-                // if there's no page, then we skip this revision
-                continue;
-            }
+            // if there's no page, then we skip this revision
+            continue;
         };
 
         let export_dir = project.join(format!(".codasai/export/{}", page_num));
@@ -94,7 +92,7 @@ fn find_first_page(repo: &git2::Repository, rev: git2::Oid) -> Result<Option<Str
     tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {
         let path = Path::new(parent).join(entry.name().expect("expected a valid UTF-8 valid name"));
 
-        if path.starts_with("pages") && path.extension() == Some(&OsStr::new("md")) {
+        if path.starts_with("pages") && path.extension() == Some(OsStr::new("md")) {
             page = Some(
                 String::from_utf8(
                     entry
@@ -122,23 +120,22 @@ fn find_new_page(
     let new_tree = repo.find_commit(new_rev)?.tree()?;
 
     let diff = repo.diff_tree_to_tree(Some(&old_tree), Some(&new_tree), None)?;
+
     for delta in diff.deltas() {
-        match delta.status() {
-            git2::Delta::Added => {
-                let file = delta.new_file();
-                let file_path = file.path().unwrap();
-                if file_path.starts_with("pages") {
-                    let page_bytes = new_tree
-                        .get_path(file_path)?
-                        .to_object(repo)?
-                        .as_blob()
-                        .unwrap()
-                        .content()
-                        .to_vec();
-                    return Ok(Some(String::from_utf8(page_bytes).unwrap()));
-                }
-            },
-            _ => {},
+        if delta.status() == git2::Delta::Added {
+            let file = delta.new_file();
+            let file_path = file.path().unwrap();
+
+            if file_path.starts_with("pages") {
+                let page_bytes = new_tree
+                    .get_path(file_path)?
+                    .to_object(repo)?
+                    .as_blob()
+                    .unwrap()
+                    .content()
+                    .to_vec();
+                return Ok(Some(String::from_utf8(page_bytes).unwrap()));
+            }
         }
     }
 
@@ -193,9 +190,9 @@ fn render_page(
     project: &Path, base_url: String, out_dir: &Path, page: &str, workspace_outline: Directory,
     page_num: i32, last: bool,
 ) -> Result<()> {
-    let title = crate::page::extract_title(&page);
-    let page_html = crate::page::to_html(&page);
-    let tera_engine = crate::page::read_templates(&project).context("failed to read templates")?;
+    let title = crate::page::extract_title(page);
+    let page_html = crate::page::to_html(page);
+    let tera_engine = crate::page::read_templates(project).context("failed to read templates")?;
 
     let previous_page = if page_num == 0 { -1 } else { page_num - 1 };
     let next_page = if last { -1 } else { page_num + 1 };

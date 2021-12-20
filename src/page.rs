@@ -19,7 +19,7 @@ pub struct PageContext {
 }
 
 pub fn to_html(markdown: &str) -> String {
-    let parser = markdown_parser(&markdown);
+    let parser = markdown_parser(markdown);
     let mut page_html_unsafe = String::new();
     pulldown_cmark::html::push_html(&mut page_html_unsafe, parser);
     ammonia::clean(&page_html_unsafe)
@@ -48,7 +48,7 @@ pub fn extract_title(page: &str) -> String {
         }
     }
 
-    return String::from("Untitled");
+    String::from("Untitled")
 }
 
 pub fn read_templates(project: &Path) -> Result<Tera> {
@@ -69,8 +69,8 @@ pub fn read_templates(project: &Path) -> Result<Tera> {
         "url_join",
         |base_url: &Value, args: &HashMap<String, Value>| {
             let base_url = match base_url {
-                &Value::String(ref v) => v.clone(),
-                &Value::Number(ref v) => v.to_string(),
+                Value::String(ref v) => v.clone(),
+                Value::Number(ref v) => v.to_string(),
                 _ => return Err(tera::Error::msg("expected base url to be of type `string`")),
             };
 
