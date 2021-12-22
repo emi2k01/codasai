@@ -24,8 +24,6 @@ codasai save
 
 Saves the current unsaved page and the workspace to git's history.
 
-**Unimplemented.** Use `git add -A && git commit` for now :(
-
 ## Exporting guide
 
 ```shell

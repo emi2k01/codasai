@@ -1,6 +1,8 @@
-use std::path::Path;
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
+use git2::Status;
 use pulldown_cmark::Parser;
 use serde::Serialize;
 use tera::Tera;
@@ -106,4 +108,31 @@ pub fn read_templates(project: &Path) -> Result<Tera> {
     );
 
     Ok(engine)
+}
+
+pub fn find_new_page(project: &Path) -> Result<Option<PathBuf>> {
+    let repo = git2::Repository::open(project)
+        .with_context(|| format!("failed to open Git repository at {:?}", project))?;
+    let statuses = repo.statuses(None).context("failed to get Git status")?;
+
+    let mut page = None;
+    for status in statuses.iter() {
+        let path = status.path().ok_or_else(|| {
+            anyhow::anyhow!(
+                "path is not valid utf-8: {:?}",
+                String::from_utf8_lossy(status.path_bytes())
+            )
+        })?;
+
+        let path = PathBuf::from(path);
+        if status.status() == Status::WT_NEW
+            && path.starts_with("pages")
+            && path.extension() == Some(OsStr::new("md"))
+        {
+            anyhow::ensure!(page.is_none(), "there is more that one unsaved page");
+            page = Some(path);
+        }
+    }
+
+    Ok(page)
 }

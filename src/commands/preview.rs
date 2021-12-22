@@ -1,8 +1,6 @@
-use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use git2::Status;
 use ignore::Walk;
 use structopt::StructOpt;
 use tera::Tera;
@@ -178,29 +176,7 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
 }
 
 pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
-    let repo = git2::Repository::open(project)
-        .with_context(|| format!("failed to open Git repository at {:?}", project))?;
-    let statuses = repo.statuses(None).context("failed to get Git status")?;
-
-    let mut page = None;
-    for status in statuses.iter() {
-        let path = status.path().ok_or_else(|| {
-            anyhow::anyhow!(
-                "path is not valid utf-8: {:?}",
-                String::from_utf8_lossy(status.path_bytes())
-            )
-        })?;
-
-        let path = PathBuf::from(path);
-        if status.status() == Status::WT_NEW
-            && path.starts_with("pages")
-            && path.extension() == Some(OsStr::new("md"))
-        {
-            anyhow::ensure!(page.is_none(), "there is more that one unsaved page");
-            page = Some(path);
-        }
-    }
-
+    let page = crate::page::find_new_page(project).context("failed to find new page")?;
     let page = page.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
     // `page` as given by git2 is relative to the git repository root but we need
     // the absolute path.

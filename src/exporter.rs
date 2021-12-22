@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 #[derive(Debug, Serialize)]
@@ -35,6 +35,17 @@ impl Directory {
             files: Vec::new(),
         }
     }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct IndexEntry {
+    pub name: String,
+    pub code: String,
+}
+
+#[derive(Default, Deserialize, Serialize)]
+pub struct Index {
+    pub entries: Vec<IndexEntry>,
 }
 
 pub struct WorkspaceOutlineBuilder {

@@ -6,7 +6,7 @@ mod page;
 mod paths;
 
 use anyhow::Result;
-use commands::{build, init, preview};
+use commands::{build, init, preview, save};
 use env_logger::Env;
 use structopt::StructOpt;
 
@@ -18,6 +18,8 @@ enum Args {
     Preview(preview::Opts),
     /// Build the guide
     Build(build::Opts),
+    /// Saves the newly added page
+    Save(save::Opts),
 }
 
 fn main() -> Result<()> {
@@ -29,5 +31,6 @@ fn main() -> Result<()> {
         Args::Init(ref opts) => init::execute(opts),
         Args::Preview(ref opts) => preview::execute(opts),
         Args::Build(ref opts) => build::execute(opts),
+        Args::Save(ref opts) => save::execute(opts),
     }
 }

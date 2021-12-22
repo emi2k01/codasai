@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
+use crate::exporter::Index;
+
 static THEME_DIR: include_dir::Dir<'_> = include_dir::include_dir!("runtime/theme");
 
 #[derive(StructOpt)]
@@ -42,6 +44,10 @@ pub fn execute(opts: &Opts) -> Result<()> {
     THEME_DIR
         .extract(path.join(".codasai/theme"))
         .context("failed to extract default theme to `.codasai/theme/`")?;
+
+    let default_index = toml::to_string_pretty(&Index::default()).unwrap();
+    std::fs::write(dotcodasai.join("index.toml"), &default_index)
+        .context("failed to create index file")?;
 
     Ok(())
 }
