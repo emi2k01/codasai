@@ -3,9 +3,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use git2::Status;
+use ignore::Walk;
 use structopt::StructOpt;
 use tera::Tera;
-use walkdir::WalkDir;
 
 use crate::code;
 use crate::exporter::{self, Directory, WorkspaceOutlineBuilder};
@@ -82,7 +82,7 @@ fn launch_server(export_dir: &Path, open: bool) {
 fn build_workspace_tree(project: &Path) -> Result<Directory> {
     let workspace = project.join("workspace");
 
-    let walker = WalkDir::new(&workspace)
+    let walker = Walk::new(&workspace)
         .into_iter()
         .filter_map(|entry| {
             if let Err(e) = &entry {
@@ -94,12 +94,12 @@ fn build_workspace_tree(project: &Path) -> Result<Directory> {
 
     let mut ws_builder = WorkspaceOutlineBuilder::new();
     for entry in walker {
-        if entry.file_type().is_dir() {
+        if matches!(entry.file_type(), Some(ft) if ft.is_dir()) {
             ws_builder.push_dir(
                 entry.file_name().to_str().unwrap().to_string(),
                 entry.depth() as i32,
             );
-        } else if entry.file_type().is_file() {
+        } else if matches!(entry.file_type(), Some(ft) if ft.is_file()) {
             ws_builder.push_file(
                 entry.file_name().to_str().unwrap().to_string(),
                 entry.path().strip_prefix(&workspace)?.display().to_string(),
@@ -114,7 +114,7 @@ fn build_workspace_tree(project: &Path) -> Result<Directory> {
 fn render_workspace(project: &Path) -> Result<()> {
     let workspace = project.join("workspace");
 
-    let walker = WalkDir::new(&workspace).into_iter().filter_map(|entry| {
+    let walker = Walk::new(&workspace).into_iter().filter_map(|entry| {
         if let Err(e) = &entry {
             log::warn!("failed to read entry {:?}", e);
         }

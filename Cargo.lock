@@ -225,6 +225,7 @@ dependencies = [
  "clap",
  "env_logger",
  "git2",
+ "ignore",
  "include_dir",
  "log",
  "once_cell",
