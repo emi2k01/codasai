@@ -6,8 +6,7 @@ use structopt::StructOpt;
 use tera::Tera;
 
 use crate::code;
-use crate::exporter::{self, Directory, WorkspaceOutlineBuilder, Index};
-use crate::page::{self, PageContext};
+use crate::context::{Directory, WorkspaceOutlineBuilder, Index, PageContext, GuideContext};
 
 #[derive(StructOpt)]
 pub struct Opts {
@@ -38,10 +37,10 @@ pub fn execute(opts: &Opts) -> Result<()> {
             .with_context(|| format!("failed to remove directory {:?}", public_dir))?;
     }
 
-    exporter::setup_public_files(&project)?;
+    crate::export::setup_public_files(&project)?;
     render_workspace(&project).context("failed to render workspace")?;
 
-    let template_engine = page::read_templates(&project)?;
+    let template_engine = crate::page::read_templates(&project)?;
     render_page(&project, &template_engine).context("failed to render page")?;
 
     if !opts.no_run_server {
@@ -158,22 +157,27 @@ pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
     let page =
         std::fs::read_to_string(&page).with_context(|| format!("failed to read {:?}", &page))?;
 
-    let title = page::extract_title(&page);
-    let page_html = page::to_html(&page);
+    let title = crate::page::extract_title(&page);
+    let page_html = crate::page::to_html(&page);
+
+    let guide_context = GuideContext {
+        base_url: "/".to_string(),
+        index: Index::default(),
+    };
 
     let page_context = PageContext {
+        number: 0,
         title,
         content: page_html,
+        code: "preview".to_string(),
         workspace: build_workspace_tree(project)?,
-        base_url: "/".to_string(),
-        page_url: "/preview".to_string(),
-        previous_page: None,
-        next_page: None,
-        index: Index::default(),
+        previous_page_code: None,
+        next_page_code: None,
     };
 
     let mut context = tera::Context::new();
     context.insert("page", &page_context);
+    context.insert("guide", &guide_context);
     let reader_html = template_engine
         .render("template.html", &context)
         .context("failed to render template")?;

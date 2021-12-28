@@ -2,118 +2,7 @@ use std::ffi::OsStr;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
-
-#[derive(Debug, Serialize)]
-struct File {
-    name: String,
-    depth: i32,
-    path: String,
-}
-
-impl File {
-    fn new(name: String, depth: i32, path: String) -> Self {
-        Self { name, depth, path }
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub struct Directory {
-    name: String,
-    depth: i32,
-    directories: Vec<Directory>,
-    files: Vec<File>,
-}
-
-impl Directory {
-    fn new(name: String, depth: i32) -> Self {
-        Self {
-            name,
-            depth,
-            directories: Vec::new(),
-            files: Vec::new(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct IndexEntry {
-    pub name: String,
-    pub code: String,
-}
-
-#[derive(Clone, Default, Deserialize, Serialize)]
-pub struct Index {
-    pub entries: Vec<IndexEntry>,
-}
-
-impl Index {
-    pub fn from_project(project: &Path) -> Result<Self> {
-        let index_path = project.join(".codasai/index.toml");
-        let index_toml = std::fs::read_to_string(&index_path)
-            .with_context(|| format!("failed to read page registry {:?}", &index_path))?;
-        Ok(toml::from_str(&index_toml)
-            .with_context(|| format!("failed to deserialize index at {:?}", &index_path))?)
-    }
-
-    pub fn write_to_project(&self, project: &Path) -> Result<()> {
-        let index_path = project.join(".codasai/index.toml");
-        std::fs::write(&index_path, toml::to_string_pretty(self)?)
-            .with_context(|| format!("failed to write index to {:?}", index_path))?;
-        Ok(())
-    }
-}
-
-pub struct WorkspaceOutlineBuilder {
-    depth: i32,
-    dirs: Vec<Directory>,
-}
-
-impl WorkspaceOutlineBuilder {
-    pub fn new() -> Self {
-        Self {
-            depth: 0,
-            dirs: vec![Directory::new(String::new(), 0)],
-        }
-    }
-
-    pub fn push_dir(&mut self, name: String, depth: i32) {
-        if depth <= self.depth {
-            for _ in depth..=self.depth {
-                self.pop_dir();
-            }
-        }
-        self.depth = depth;
-        self.dirs.push(Directory::new(name, self.depth));
-    }
-
-    fn pop_dir(&mut self) {
-        let last_dir = self.dirs.pop().unwrap();
-        self.dirs.last_mut().unwrap().directories.push(last_dir);
-    }
-
-    pub fn push_file(&mut self, name: String, path: String, depth: i32) {
-        if depth <= self.depth {
-            for _ in depth..=self.depth {
-                self.pop_dir();
-            }
-        }
-        self.depth = depth - 1;
-        self.dirs
-            .last_mut()
-            .unwrap()
-            .files
-            .push(File::new(name, depth, path));
-    }
-
-    pub fn finish(mut self) -> Directory {
-        for _ in 0..self.depth {
-            self.pop_dir();
-        }
-        self.dirs.pop().unwrap()
-    }
-}
 
 pub fn setup_public_files(project: &Path) -> Result<()> {
     let public_dir = project.join(".codasai/export/public");
@@ -129,7 +18,7 @@ pub fn setup_public_files(project: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn compile_sass(project: &Path) -> Result<()> {
+fn compile_sass(project: &Path) -> Result<()> {
     let sass_dir = project.join(".codasai/theme/sass");
     let out_dir = project.join(".codasai/export/public/style");
 
@@ -183,21 +72,21 @@ pub fn compile_sass(project: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn copy_theme_public_dir(project: &Path) -> Result<()> {
+fn copy_theme_public_dir(project: &Path) -> Result<()> {
     let public = project.join(".codasai/theme/public");
     let dest = project.join(".codasai/export/public/theme");
 
     copy_dir_contents(&public, &dest)
 }
 
-pub fn copy_user_public_dir(project: &Path) -> Result<()> {
+fn copy_user_public_dir(project: &Path) -> Result<()> {
     let public = project.join("public");
     let dest = project.join(".codasai/export/public");
 
     copy_dir_contents(&public, &dest)
 }
 
-pub fn copy_dir_contents(dir: &Path, dest: &Path) -> Result<()> {
+fn copy_dir_contents(dir: &Path, dest: &Path) -> Result<()> {
     let walkdir = WalkDir::new(&dir).into_iter().filter_map(|entry| {
         if let Err(e) = &entry {
             log::warn!("failed to read entry {:?}", e);

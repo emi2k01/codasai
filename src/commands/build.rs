@@ -1,11 +1,10 @@
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsString;
 use std::path::Path;
 
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
-use crate::exporter::{self, Directory, Index, WorkspaceOutlineBuilder};
-use crate::page::PageContext;
+use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder};
 use crate::paths;
 
 #[derive(StructOpt)]
@@ -16,68 +15,51 @@ pub struct Opts {
 
 pub fn execute(opts: &Opts) -> Result<()> {
     let project = paths::project()?;
+
+    crate::export::setup_public_files(&project)?;
+    let index = Index::from_project(&project)?;
+    let guide_ctx = GuideContext {
+        index: index.clone(),
+        base_url: opts.base_url.clone(),
+    };
+
     let repo = git2::Repository::open(&project)
         .with_context(|| format!("failed to open repository at {:?}", &project))?;
 
-    exporter::setup_public_files(&project)?;
-
-    //
-    // - Export every revision
-    let mut revwalk = repo.revwalk().with_context(|| {
-        format!(
-            "failed to create rev walker for repository at {:?}",
-            &project
-        )
-    })?;
-    revwalk.set_sorting(git2::Sort::REVERSE)?;
-    revwalk
-        .push_head()
-        .context("failed to push repository head")?;
-
-    let index = Index::from_project(&project)?;
     let mut page_num = 0;
-    let total_pages = count_pages(&project);
-
     let mut last_rev = None;
-    for rev in revwalk {
+    for rev in revwalk(&repo)? {
         let rev = rev.context("failed to retrieve rev")?;
 
-        let page = if let Some(last_rev) = last_rev {
-            if let Some(new_page) = find_new_page(&repo, last_rev, rev)? {
-                new_page
-            } else {
-                // if there's no new page, then we skip this revision
-                continue;
-            }
-        } else if let Some(first_page) = find_first_page(&repo, rev)? {
-            first_page
+        let page = if let Some(page) = find_new_page(&repo, last_rev, rev)? {
+            page
         } else {
-            // if there's no page, then we skip this revision
             continue;
         };
 
-        let export_dir = project.join(format!(".codasai/export/{}", index.entries[page_num].code));
-        std::fs::create_dir_all(&export_dir)
-            .with_context(|| format!("failed to create dir {:?}", &export_dir))?;
-
         let tree = repo.find_commit(rev)?.tree()?;
-
         let workspace_outline =
             build_workspace_outline(&repo, &tree).context("failed to build workspace outline")?;
+        let page_ctx = PageContext {
+            number: page_num,
+            title: crate::page::extract_title(&page),
+            code: index.entries[page_num].code.clone(),
+            content: crate::page::to_html(&page),
+            workspace: workspace_outline,
+            previous_page_code: index
+                .entries
+                .get(page_num.wrapping_sub(1))
+                .map(|e| e.code.clone()),
+            next_page_code: index
+                .entries
+                .get(page_num.wrapping_add(1))
+                .map(|e| e.code.clone()),
+        };
 
-        let is_last = page_num == total_pages - 1;
-        render_page(
-            &project,
-            opts.base_url.clone(),
-            &export_dir,
-            &page,
-            workspace_outline,
-            page_num as i32,
-            is_last,
-            &index,
-        )?;
+        let out_dir = project.join(format!(".codasai/export/{}", index.entries[page_num].code));
+        render_page(&guide_ctx, &page_ctx, &project, &out_dir)?;
 
-        let workspace_dir = export_dir.join("workspace");
+        let workspace_dir = out_dir.join("workspace");
         render_workspace(&repo, &tree, &workspace_dir)?;
 
         last_rev = Some(rev);
@@ -87,41 +69,28 @@ pub fn execute(opts: &Opts) -> Result<()> {
     Ok(())
 }
 
-fn find_first_page(repo: &git2::Repository, rev: git2::Oid) -> Result<Option<String>> {
-    let tree = repo.find_commit(rev)?.tree()?;
-
-    let mut page = None;
-    tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {
-        let path = Path::new(parent).join(entry.name().expect("expected a valid UTF-8 valid name"));
-
-        if path.starts_with("pages") && path.extension() == Some(OsStr::new("md")) {
-            page = Some(
-                String::from_utf8(
-                    entry
-                        .to_object(repo)
-                        .unwrap()
-                        .as_blob()
-                        .unwrap()
-                        .content()
-                        .to_vec(),
-                )
-                .unwrap(),
-            );
-            return git2::TreeWalkResult::Abort;
-        }
-        git2::TreeWalkResult::Ok
-    })?;
-
-    Ok(page)
+fn revwalk(repo: &git2::Repository) -> Result<git2::Revwalk> {
+    let mut revwalk = repo
+        .revwalk()
+        .with_context(|| format!("failed to create rev walker for repository",))?;
+    revwalk.set_sorting(git2::Sort::REVERSE)?;
+    revwalk
+        .push_head()
+        .context("failed to push repository head")?;
+    Ok(revwalk)
 }
 
 fn find_new_page(
-    repo: &git2::Repository, old_rev: git2::Oid, new_rev: git2::Oid,
+    repo: &git2::Repository, old_rev: Option<git2::Oid>, new_rev: git2::Oid,
 ) -> Result<Option<String>> {
-    let old_tree = repo.find_commit(old_rev)?.tree()?;
+    let old_tree = old_rev.and_then(|old_rev| {
+        repo.find_commit(old_rev)
+            .ok()
+            .and_then(|commit| commit.tree().ok())
+    });
     let new_tree = repo.find_commit(new_rev)?.tree()?;
 
-    let diff = repo.diff_tree_to_tree(Some(&old_tree), Some(&new_tree), None)?;
+    let diff = repo.diff_tree_to_tree(old_tree.as_ref(), Some(&new_tree), None)?;
 
     for delta in diff.deltas() {
         if delta.status() == git2::Delta::Added {
@@ -189,36 +158,16 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
 }
 
 fn render_page(
-    project: &Path, base_url: String, out_dir: &Path, page: &str, workspace_outline: Directory,
-    page_num: i32, last: bool, index: &Index,
+    guide_ctx: &GuideContext, page_ctx: &PageContext, project: &Path, out_dir: &Path,
 ) -> Result<()> {
-    let title = crate::page::extract_title(page);
-    let page_html = crate::page::to_html(page);
+    std::fs::create_dir_all(&out_dir)
+        .with_context(|| format!("failed to create dir {:?}", &out_dir))?;
+
     let tera_engine = crate::page::read_templates(project).context("failed to read templates")?;
 
-    let previous_page = if page_num == 0 { -1 } else { page_num - 1 } as usize;
-    let next_page = if last { -1 } else { page_num + 1 } as usize;
-
-    let page_context = PageContext {
-        title,
-        content: page_html,
-        workspace: workspace_outline,
-        previous_page: index.entries.get(previous_page).map(|e| e.code.clone()),
-        next_page: index.entries.get(next_page).map(|e| e.code.clone()),
-        page_url: Path::new(&base_url)
-            .join(
-                out_dir
-                    .strip_prefix(project.join(".codasai/export"))
-                    .unwrap(),
-            )
-            .display()
-            .to_string(),
-        base_url,
-        index: index.clone(),
-    };
-
     let mut context = tera::Context::new();
-    context.insert("page", &page_context);
+    context.insert("guide", &guide_ctx);
+    context.insert("page", &page_ctx);
 
     let output_html = tera_engine
         .render("template.html", &context)
@@ -265,22 +214,4 @@ fn build_workspace_outline(repo: &git2::Repository, tree: &git2::Tree) -> Result
     })?;
 
     Ok(ws_builder.finish())
-}
-
-fn count_pages(project: &Path) -> usize {
-    let pages = project.join("pages");
-
-    let walker = walkdir::WalkDir::new(&pages)
-        .into_iter()
-        .filter_map(|e| match e {
-            Ok(entry) => Some(entry),
-            Err(err) => {
-                log::warn!("failed to read entry {:?}", err);
-                None
-            }
-        });
-
-    walker
-        .filter(|e| e.file_type().is_file() && e.path().starts_with(&pages))
-        .count()
 }

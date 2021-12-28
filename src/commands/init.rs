@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
-use crate::exporter::Index;
+use crate::context::Index;
 
 static THEME_DIR: include_dir::Dir<'_> = include_dir::include_dir!("runtime/theme");
 

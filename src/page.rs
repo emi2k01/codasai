@@ -4,22 +4,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use git2::Status;
 use pulldown_cmark::Parser;
-use serde::Serialize;
 use tera::Tera;
-
-use crate::exporter::{Directory, Index};
-
-#[derive(Serialize)]
-pub struct PageContext {
-    pub title: String,
-    pub content: String,
-    pub workspace: Directory,
-    pub base_url: String,
-    pub page_url: String,
-    pub previous_page: Option<String>,
-    pub next_page: Option<String>,
-    pub index: Index
-}
 
 pub fn to_html(markdown: &str) -> String {
     let parser = markdown_parser(markdown);

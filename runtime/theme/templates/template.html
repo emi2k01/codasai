@@ -7,17 +7,17 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href='{{ page.base_url | url_join(with="public/style/style.css") }}' />
+    <link rel="stylesheet" href='{{ guide.base_url | url_join(with="public/style/style.css") }}' />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
     <title>{{ page.title }}</title>
 </head>
 
-<body data-workspace-url='{{ page.page_url | url_join(with="workspace") }}'>
+<body data-workspace-url='{{ guide.base_url | url_join(with=page.code) | url_join(with="workspace") }}'>
     <div id="index">
         <button class="btn index-toggler"><span class="fas fa-times" aria-hidden></span>Close</button>
         <ul>
-        {% for entry in page.index.entries %}
-            <li><a href="{{ page.base_url | url_join(with=entry.code) }}">{{ entry.name }}</a></li>
+        {% for entry in guide.index.entries %}
+            <li><a href="{{ guide.base_url | url_join(with=entry.code) }}">{{ entry.name }}</a></li>
         {% endfor %}
         </ul>
     </div>
@@ -27,8 +27,8 @@
                 <button class="btn index-toggler"><span class="fas fa-bars" aria-hidden></span>Index</button>
             </div>
             <div>
-                {% if page.previous_page %}
-                    <a href="{{ page.base_url | url_join(with=page.previous_page) }}" class="btn" title="TODO">
+                {% if page.previous_page_code %}
+                    <a href="{{ guide.base_url | url_join(with=page.previous_page_code) }}" class="btn" title="TODO">
                         <span class="fas fa-arrow-left" aria-hidden="true"></span>
                         Previous page
                     </a>
@@ -38,8 +38,8 @@
                         Previous page
                     </a>
                 {% endif %}
-                {% if page.next_page %}
-                    <a href="{{ page.base_url | url_join(with=page.next_page) }}" class="btn" title="TODO">
+                {% if page.next_page_code %}
+                    <a href="{{ guide.base_url | url_join(with=page.next_page_code) }}" class="btn" title="TODO">
                         Next page
                         <span class="fas fa-arrow-right" aria-hidden="true"></span>
                     </a>
@@ -80,7 +80,7 @@
             </section>
         </div>
     </div>
-    <script type="module" src="{{ page.base_url | url_join(with='public/theme/main.js') }}"></script>
+    <script type="module" src="{{ guide.base_url | url_join(with='public/theme/main.js') }}"></script>
 </body>
 
 </html>

@@ -3,7 +3,7 @@ use std::process::Command;
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
-use crate::exporter::{Index, IndexEntry};
+use crate::context::{Index, IndexEntry};
 
 #[derive(StructOpt)]
 pub struct Opts {}
