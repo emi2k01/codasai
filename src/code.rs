@@ -15,6 +15,10 @@ thread_local! {
     });
 }
 
+/// Escapes and highlights `code` using `ext` as the file extension to select the language's syntax.
+///
+/// If the syntax highlighting doesn't support the file extension, the returned string is only
+/// escaped.
 pub fn escape_and_highlight(code: &str, ext: &str) -> String {
     SYNTAX_SET.with(|ss| -> String {
         if let Some(syntax) = ss.find_syntax_by_extension(ext) {

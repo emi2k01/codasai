@@ -1,3 +1,4 @@
+/// Escapes a string to safe html.
 pub fn escape(text: &str) -> String {
     let mut escaped = String::new();
     for ch in text.chars() {

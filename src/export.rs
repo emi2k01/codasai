@@ -4,20 +4,22 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use walkdir::WalkDir;
 
-pub fn setup_public_files(project: &Path) -> Result<()> {
+/// Takes care of exporting all files needed by the guide such as images, css, etc.
+pub fn export_public_files(project: &Path) -> Result<()> {
     let public_dir = project.join(".codasai/export/public");
 
     if public_dir.exists() {
         std::fs::remove_dir_all(&public_dir).context("failed to remove public dir")?;
     }
 
-    copy_user_public_dir(project).context("failed to export public directory")?;
+    export_user_public_dir(project).context("failed to export public directory")?;
     copy_theme_public_dir(project).context("failed to export theme public directory")?;
     compile_sass(project).context("failed to render sass files")?;
 
     Ok(())
 }
 
+/// Compiles the project's theme sass to the exported public directory
 fn compile_sass(project: &Path) -> Result<()> {
     let sass_dir = project.join(".codasai/theme/sass");
     let out_dir = project.join(".codasai/export/public/style");
@@ -72,6 +74,7 @@ fn compile_sass(project: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Exports the public directory provided by the author of the project's theme.
 fn copy_theme_public_dir(project: &Path) -> Result<()> {
     let public = project.join(".codasai/theme/public");
     let dest = project.join(".codasai/export/public/theme");
@@ -79,13 +82,15 @@ fn copy_theme_public_dir(project: &Path) -> Result<()> {
     copy_dir_contents(&public, &dest)
 }
 
-fn copy_user_public_dir(project: &Path) -> Result<()> {
+/// Exports the public directory provided by the author of the guide.
+fn export_user_public_dir(project: &Path) -> Result<()> {
     let public = project.join("public");
     let dest = project.join(".codasai/export/public");
 
     copy_dir_contents(&public, &dest)
 }
 
+/// Copies all contents in `dir` to `dest` recursively.
 fn copy_dir_contents(dir: &Path, dest: &Path) -> Result<()> {
     let walkdir = WalkDir::new(&dir).into_iter().filter_map(|entry| {
         if let Err(e) = &entry {

@@ -16,7 +16,7 @@ pub struct Opts {
 pub fn execute(opts: &Opts) -> Result<()> {
     let project = paths::project()?;
 
-    crate::export::setup_public_files(&project)?;
+    crate::export::export_public_files(&project)?;
     let index = Index::from_project(&project)?;
     let guide_ctx = GuideContext {
         index: index.clone(),
@@ -44,7 +44,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
             number: page_num,
             title: crate::page::extract_title(&page),
             code: index.entries[page_num].code.clone(),
-            content: crate::page::to_html(&page),
+            content: crate::page::markdown_to_html(&page),
             workspace: workspace_outline,
             previous_page_code: index
                 .entries
@@ -57,10 +57,10 @@ pub fn execute(opts: &Opts) -> Result<()> {
         };
 
         let out_dir = project.join(format!(".codasai/export/{}", index.entries[page_num].code));
-        render_page(&guide_ctx, &page_ctx, &project, &out_dir)?;
+        export_page(&guide_ctx, &page_ctx, &project, &out_dir)?;
 
         let workspace_dir = out_dir.join("workspace");
-        render_workspace(&repo, &tree, &workspace_dir)?;
+        export_workspace(&repo, &tree, &workspace_dir)?;
 
         last_rev = Some(rev);
         page_num += 1;
@@ -69,6 +69,9 @@ pub fn execute(opts: &Opts) -> Result<()> {
     Ok(())
 }
 
+/// Creates a [`Revwalk`](git2::Revwalk) that iterates on reverse.
+///
+/// It iterates by yielding the oldest revisions first.
 fn revwalk(repo: &git2::Repository) -> Result<git2::Revwalk> {
     let mut revwalk = repo
         .revwalk()
@@ -80,6 +83,9 @@ fn revwalk(repo: &git2::Repository) -> Result<git2::Revwalk> {
     Ok(revwalk)
 }
 
+/// Finds the new page in `new_rev` by performing a diff between both revisions.
+///
+/// An `old_rev` with a `None` value indicates an empty tree.
 fn find_new_page(
     repo: &git2::Repository, old_rev: Option<git2::Oid>, new_rev: git2::Oid,
 ) -> Result<Option<String>> {
@@ -113,7 +119,12 @@ fn find_new_page(
     Ok(None)
 }
 
-fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path) -> Result<()> {
+/// Exports the whole workspace in the given `tree` to `workspace`.
+///
+/// `workspace` is a directory in the working directory and not in a git revision.
+///
+/// This will highlight the exported files that are supported by the highlighting engine.
+fn export_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path) -> Result<()> {
     std::fs::create_dir_all(workspace)
         .with_context(|| format!("failed to create directory {:?}", workspace))?;
 
@@ -157,13 +168,14 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
     Ok(())
 }
 
-fn render_page(
+/// Exports the page with the given contexts to `out_dir/index.html`
+fn export_page(
     guide_ctx: &GuideContext, page_ctx: &PageContext, project: &Path, out_dir: &Path,
 ) -> Result<()> {
     std::fs::create_dir_all(&out_dir)
         .with_context(|| format!("failed to create dir {:?}", &out_dir))?;
 
-    let tera_engine = crate::page::read_templates(project).context("failed to read templates")?;
+    let tera_engine = crate::page::read_theme_templates(project).context("failed to read templates")?;
 
     let mut context = tera::Context::new();
     context.insert("guide", &guide_ctx);
@@ -180,6 +192,7 @@ fn render_page(
     Ok(())
 }
 
+/// Traverses the workspace directory in the given `tree` and builds and outline.
 fn build_workspace_outline(repo: &git2::Repository, tree: &git2::Tree) -> Result<Directory> {
     let mut ws_builder = WorkspaceOutlineBuilder::new();
     tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {

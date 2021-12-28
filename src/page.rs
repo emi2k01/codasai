@@ -6,7 +6,8 @@ use git2::Status;
 use pulldown_cmark::Parser;
 use tera::Tera;
 
-pub fn to_html(markdown: &str) -> String {
+/// Converts markdown to sanitized html.
+pub fn markdown_to_html(markdown: &str) -> String {
     let parser = markdown_parser(markdown);
     let mut page_html_unsafe = String::new();
     pulldown_cmark::html::push_html(&mut page_html_unsafe, parser);
@@ -18,6 +19,7 @@ pub fn markdown_parser(markdown: &str) -> Parser {
     Parser::new_ext(markdown, options)
 }
 
+/// Extracts the first title found in markdown's syntax.
 pub fn extract_title(page: &str) -> String {
     use pulldown_cmark::{Event, Tag};
 
@@ -39,7 +41,7 @@ pub fn extract_title(page: &str) -> String {
     String::from("Untitled")
 }
 
-pub fn read_templates(project: &Path) -> Result<Tera> {
+pub fn read_theme_templates(project: &Path) -> Result<Tera> {
     use std::collections::HashMap;
 
     use tera::Value;
@@ -96,7 +98,12 @@ pub fn read_templates(project: &Path) -> Result<Tera> {
     Ok(engine)
 }
 
-pub fn find_new_page(project: &Path) -> Result<Option<PathBuf>> {
+/// Find the unsaved page in the project.
+///
+/// It uses `git status` to detect what page is new.
+///
+/// It returns an error if there are multiple unsaved pages.
+pub fn find_unsaved_page(project: &Path) -> Result<Option<PathBuf>> {
     let repo = git2::Repository::open(project)
         .with_context(|| format!("failed to open Git repository at {:?}", project))?;
     let statuses = repo.statuses(None).context("failed to get Git status")?;

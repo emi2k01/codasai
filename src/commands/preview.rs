@@ -6,7 +6,7 @@ use structopt::StructOpt;
 use tera::Tera;
 
 use crate::code;
-use crate::context::{Directory, WorkspaceOutlineBuilder, Index, PageContext, GuideContext};
+use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder};
 
 #[derive(StructOpt)]
 pub struct Opts {
@@ -32,16 +32,11 @@ pub fn execute(opts: &Opts) -> Result<()> {
             .with_context(|| format!("failed to remove directory {:?}", preview_dir))?;
     }
 
-    if public_dir.exists() {
-        std::fs::remove_dir_all(&public_dir)
-            .with_context(|| format!("failed to remove directory {:?}", public_dir))?;
-    }
+    crate::export::export_public_files(&project)?;
+    export_workspace(&project).context("failed to render workspace")?;
 
-    crate::export::setup_public_files(&project)?;
-    render_workspace(&project).context("failed to render workspace")?;
-
-    let template_engine = crate::page::read_templates(&project)?;
-    render_page(&project, &template_engine).context("failed to render page")?;
+    let template_engine = crate::page::read_theme_templates(&project)?;
+    export_unsaved_page(&project, &template_engine).context("failed to render page")?;
 
     if !opts.no_run_server {
         server::launch_server(&export_dir, !opts.no_open);
@@ -50,7 +45,10 @@ pub fn execute(opts: &Opts) -> Result<()> {
     Ok(())
 }
 
-fn build_workspace_tree(project: &Path) -> Result<Directory> {
+/// Traverses the project's workspace and builds an outline
+///
+/// It respects ignore files.
+fn build_workspace_outline(project: &Path) -> Result<Directory> {
     let workspace = project.join("workspace");
 
     let walker = Walk::new(&workspace)
@@ -82,7 +80,10 @@ fn build_workspace_tree(project: &Path) -> Result<Directory> {
     Ok(ws_builder.finish())
 }
 
-fn render_workspace(project: &Path) -> Result<()> {
+/// Exports the whole workspace in the project
+///
+/// It respects ignore files.
+fn export_workspace(project: &Path) -> Result<()> {
     let workspace = project.join("workspace");
 
     let walker = Walk::new(&workspace).into_iter().filter_map(|entry| {
@@ -103,7 +104,7 @@ fn render_workspace(project: &Path) -> Result<()> {
     for entry in walker {
         if let Ok(metadata) = entry.metadata() {
             if metadata.is_file() {
-                render_file_to_preview(entry.path(), project, &preview_ws)
+                export_workspace_file(entry.path(), project, &preview_ws)
                     .with_context(|| format!("failed to render file {:?}", entry.path()))?;
             }
         }
@@ -112,9 +113,11 @@ fn render_workspace(project: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Renders a file in the workspace to html and saves it under `preview_ws`
-/// following the same directory structure relative to the project directory.
-fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Result<()> {
+/// Exports `file` to `preview_ws` keeping the same directory structure relative to the workspace
+/// directory.
+///
+/// It highlights the exported files it they're supported by the highlighting engine.
+fn export_workspace_file(file: &Path, project: &Path, preview_ws: &Path) -> Result<()> {
     let relative_path = file
         .strip_prefix(&project.join("workspace"))
         .expect("failed to strip prefix");
@@ -125,10 +128,10 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
             let mut extension = extension.to_owned();
             extension.push(".html");
             preview_path.set_extension(extension);
-        },
+        }
         None => {
             preview_path.set_extension("html");
-        },
+        }
     }
 
     let parent = preview_path.parent().unwrap();
@@ -148,8 +151,11 @@ fn render_file_to_preview(file: &Path, project: &Path, preview_ws: &Path) -> Res
     Ok(())
 }
 
-pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
-    let page = crate::page::find_new_page(project).context("failed to find new page")?;
+/// Exports the unsaved page in the project.
+///
+/// It uses `template.html` in `template_engine` to render the page.
+pub fn export_unsaved_page(project: &Path, template_engine: &Tera) -> Result<()> {
+    let page = crate::page::find_unsaved_page(project).context("failed to find new page")?;
     let page = page.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
     // `page` as given by git2 is relative to the git repository root but we need
     // the absolute path.
@@ -158,7 +164,7 @@ pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
         std::fs::read_to_string(&page).with_context(|| format!("failed to read {:?}", &page))?;
 
     let title = crate::page::extract_title(&page);
-    let page_html = crate::page::to_html(&page);
+    let page_html = crate::page::markdown_to_html(&page);
 
     let guide_context = GuideContext {
         base_url: "/".to_string(),
@@ -170,7 +176,7 @@ pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
         title,
         content: page_html,
         code: "preview".to_string(),
-        workspace: build_workspace_tree(project)?,
+        workspace: build_workspace_outline(project)?,
         previous_page_code: None,
         next_page_code: None,
     };
