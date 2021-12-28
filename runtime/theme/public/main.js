@@ -143,6 +143,15 @@ function main() {
     addLinkEvents();
     addDirectoryButtonsEvents();
     disableDisabledAnchors();
+    let indexTogglers = document.getElementsByClassName("index-toggler");
+
+    let index = document.getElementById("index");
+    for (let i = 0; i < indexTogglers.length; i++) {
+        const indexToggler = indexTogglers[i];
+        indexToggler.addEventListener("click", () => {
+            index.classList.toggle("open");
+        });
+    }
 }
 
 function escapeHtml(unsafe)

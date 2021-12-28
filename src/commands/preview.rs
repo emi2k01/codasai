@@ -6,7 +6,7 @@ use structopt::StructOpt;
 use tera::Tera;
 
 use crate::code;
-use crate::exporter::{self, Directory, WorkspaceOutlineBuilder};
+use crate::exporter::{self, Directory, WorkspaceOutlineBuilder, Index};
 use crate::page::{self, PageContext};
 
 #[derive(StructOpt)]
@@ -45,36 +45,10 @@ pub fn execute(opts: &Opts) -> Result<()> {
     render_page(&project, &template_engine).context("failed to render page")?;
 
     if !opts.no_run_server {
-        launch_server(&export_dir, !opts.no_open);
+        server::launch_server(&export_dir, !opts.no_open);
     }
 
     Ok(())
-}
-
-fn launch_server(export_dir: &Path, open: bool) {
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_time()
-        .enable_io()
-        .build()
-        .unwrap()
-        .block_on(async {
-            let address = [127, 0, 0, 1];
-            let port = 8000;
-            if open {
-                tokio::spawn(async move {
-                    let url = format!(
-                        "http://{}.{}.{}.{}:{}/preview",
-                        address[0], address[1], address[2], address[3], port
-                    );
-                    if let Err(e) = open::that(url).context("failed to open browser") {
-                        log::warn!("{}", e);
-                    }
-                });
-            }
-            warp::serve(warp::fs::dir(export_dir.to_path_buf()))
-                .run((address, port))
-                .await;
-        });
 }
 
 fn build_workspace_tree(project: &Path) -> Result<Directory> {
@@ -193,8 +167,9 @@ pub fn render_page(project: &Path, template_engine: &Tera) -> Result<()> {
         workspace: build_workspace_tree(project)?,
         base_url: "/".to_string(),
         page_url: "/preview".to_string(),
-        previous_page: -1,
-        next_page: -1,
+        previous_page: None,
+        next_page: None,
+        index: Index::default(),
     };
 
     let mut context = tera::Context::new();

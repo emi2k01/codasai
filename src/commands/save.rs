@@ -14,11 +14,7 @@ pub fn execute(_opts: &Opts) -> Result<()> {
         .canonicalize()
         .context("failed to canonicalize project directory")?;
 
-    let index_path = project.join(".codasai/index.toml");
-    let index_toml = std::fs::read_to_string(&index_path)
-        .with_context(|| format!("failed to read page registry {:?}", &index_path))?;
-    let mut index: Index = toml::from_str(&index_toml)
-        .with_context(|| format!("failed to deserialize index at {:?}", &index_path))?;
+    let mut index = Index::from_project(&project)?;
 
     let new_page_path = crate::page::find_new_page(&project).context("failed to find new page")?;
     let new_page_path = new_page_path.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
@@ -39,8 +35,7 @@ pub fn execute(_opts: &Opts) -> Result<()> {
         code: new_page_file_name.clone(),
     });
 
-    std::fs::write(&index_path, toml::to_string_pretty(&index)?)
-        .with_context(|| format!("failed to write index to {:?}", index_path))?;
+    index.write_to_project(&project)?;
 
     let git_add_output = Command::new("git")
         .args(&["add", "-A"])

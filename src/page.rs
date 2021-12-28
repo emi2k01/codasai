@@ -7,7 +7,7 @@ use pulldown_cmark::Parser;
 use serde::Serialize;
 use tera::Tera;
 
-use crate::exporter::Directory;
+use crate::exporter::{Directory, Index};
 
 #[derive(Serialize)]
 pub struct PageContext {
@@ -16,8 +16,9 @@ pub struct PageContext {
     pub workspace: Directory,
     pub base_url: String,
     pub page_url: String,
-    pub previous_page: i32,
-    pub next_page: i32,
+    pub previous_page: Option<String>,
+    pub next_page: Option<String>,
+    pub index: Index
 }
 
 pub fn to_html(markdown: &str) -> String {

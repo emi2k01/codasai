@@ -19,6 +19,69 @@ body {
     background-color: $darker-color;
 }
 
+a.btn, button.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 0.85rem;
+    padding: 0.3em 0.6em;
+    background-color: $medium-color;
+    color: $white;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+
+    .fas, .fa {
+        font-size: 0.9em;
+    }
+
+    &.disabled {
+        color: transparentize($white, 0.5);
+        background-color: darken($color: $medium-color, $amount: 10%);
+    }
+
+    &:not(.disabled):hover {
+        background-color: darken($color: $medium-color, $amount: 5%);
+    }
+}
+
+#index {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    padding: 1em;
+    background-color: $dark-color;
+    box-shadow: 5px 0 3px 0 $darker-color;
+    display: none;
+
+    &.open {
+        display: block;
+    }
+
+    .index-toggler {
+        margin-bottom: 10px;
+    }
+
+    ul {
+        list-style: none;
+
+        li + li {
+            margin-top: 0.6em;
+        }
+
+        a {
+            color: $white;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
 #wrapper {
     display: flex;
     flex-direction: column;
@@ -28,34 +91,22 @@ body {
 header {
     display: flex;
     padding: 0.4rem 1.5rem;
-    justify-content: flex-end;
+    justify-content: space-between;
 
     div {
         display: flex;
 
-        a {
+        a, button {
             display: block;
-            padding: 0.3em 0.6em;
-            font-size: 1.1rem;
-            background-color: $medium-color;
-            color: $white;
-            text-decoration: none;
+        }
 
-            &.disabled {
-                color: transparentize($white, 0.5);
-                background-color: darken($color: $medium-color, $amount: 10%);
-            }
-
-            &:nth-child(1) {
+        &:nth-child(2) {
+            a:nth-child(1) {
                 border-radius: 5px 0 0 5px;
             }
 
-            &:nth-child(2) {
+            a:nth-child(2) {
                 border-radius: 0 5px 5px 0;
-            }
-
-            &:not(.disabled):hover {
-                background-color: darken($color: $medium-color, $amount: 5%);
             }
         }
     }

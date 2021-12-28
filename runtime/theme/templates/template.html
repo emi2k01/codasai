@@ -13,18 +13,41 @@
 </head>
 
 <body data-workspace-url='{{ page.page_url | url_join(with="workspace") }}'>
+    <div id="index">
+        <button class="btn index-toggler"><span class="fas fa-times" aria-hidden></span>Close</button>
+        <ul>
+        {% for entry in page.index.entries %}
+            <li><a href="{{ page.base_url | url_join(with=entry.code) }}">{{ entry.name }}</a></li>
+        {% endfor %}
+        </ul>
+    </div>
     <div id="wrapper">
         <header>
             <div>
-                {% if page.previous_page != -1 %}
-                    <a href="{{ page.base_url | url_join(with=page.previous_page) }}" title="TODO">←</a>
+                <button class="btn index-toggler"><span class="fas fa-bars" aria-hidden></span>Index</button>
+            </div>
+            <div>
+                {% if page.previous_page %}
+                    <a href="{{ page.base_url | url_join(with=page.previous_page) }}" class="btn" title="TODO">
+                        <span class="fas fa-arrow-left" aria-hidden="true"></span>
+                        Previous page
+                    </a>
                 {% else %}
-                    <a href="#" title="TODO" class="disabled" aria-hidden="true">←</a>
+                    <a href="#" title="TODO" class="btn disabled">
+                        <span class="fas fa-arrow-left" aria-hidden="true"></span>
+                        Previous page
+                    </a>
                 {% endif %}
-                {% if page.next_page != -1 %}
-                    <a href="{{ page.base_url | url_join(with=page.next_page) }}" title="TODO">→</a>
+                {% if page.next_page %}
+                    <a href="{{ page.base_url | url_join(with=page.next_page) }}" class="btn" title="TODO">
+                        Next page
+                        <span class="fas fa-arrow-right" aria-hidden="true"></span>
+                    </a>
                 {% else %}
-                    <a href="#" title="TODO" class="disabled" aria-hidden="true">→</a>
+                    <a href="#" title="TODO" class="btn disabled">
+                        Next page
+                        <span class="fas fa-arrow-right" aria-hidden="true"></span>
+                    </a>
                 {% endif %}
             </div>
         </header>

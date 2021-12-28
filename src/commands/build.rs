@@ -4,7 +4,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
-use crate::exporter::{self, Directory, WorkspaceOutlineBuilder};
+use crate::exporter::{self, Directory, Index, WorkspaceOutlineBuilder};
 use crate::page::PageContext;
 use crate::paths;
 
@@ -21,7 +21,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
 
     exporter::setup_public_files(&project)?;
 
-    // 
+    //
     // - Export every revision
     let mut revwalk = repo.revwalk().with_context(|| {
         format!(
@@ -34,6 +34,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
         .push_head()
         .context("failed to push repository head")?;
 
+    let index = Index::from_project(&project)?;
     let mut page_num = 0;
     let total_pages = count_pages(&project);
 
@@ -55,7 +56,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
             continue;
         };
 
-        let export_dir = project.join(format!(".codasai/export/{}", page_num));
+        let export_dir = project.join(format!(".codasai/export/{}", index.entries[page_num].code));
         std::fs::create_dir_all(&export_dir)
             .with_context(|| format!("failed to create dir {:?}", &export_dir))?;
 
@@ -73,6 +74,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
             workspace_outline,
             page_num as i32,
             is_last,
+            &index,
         )?;
 
         let workspace_dir = export_dir.join("workspace");
@@ -188,21 +190,21 @@ fn render_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
 
 fn render_page(
     project: &Path, base_url: String, out_dir: &Path, page: &str, workspace_outline: Directory,
-    page_num: i32, last: bool,
+    page_num: i32, last: bool, index: &Index,
 ) -> Result<()> {
     let title = crate::page::extract_title(page);
     let page_html = crate::page::to_html(page);
     let tera_engine = crate::page::read_templates(project).context("failed to read templates")?;
 
-    let previous_page = if page_num == 0 { -1 } else { page_num - 1 };
-    let next_page = if last { -1 } else { page_num + 1 };
+    let previous_page = if page_num == 0 { -1 } else { page_num - 1 } as usize;
+    let next_page = if last { -1 } else { page_num + 1 } as usize;
 
     let page_context = PageContext {
         title,
         content: page_html,
         workspace: workspace_outline,
-        previous_page,
-        next_page,
+        previous_page: index.entries.get(previous_page).map(|e| e.code.clone()),
+        next_page: index.entries.get(next_page).map(|e| e.code.clone()),
         page_url: Path::new(&base_url)
             .join(
                 out_dir
@@ -212,6 +214,7 @@ fn render_page(
             .display()
             .to_string(),
         base_url,
+        index: index.clone(),
     };
 
     let mut context = tera::Context::new();
@@ -267,15 +270,15 @@ fn build_workspace_outline(repo: &git2::Repository, tree: &git2::Tree) -> Result
 fn count_pages(project: &Path) -> usize {
     let pages = project.join("pages");
 
-    let walker = walkdir::WalkDir::new(&pages).into_iter().filter_map(|e| {
-        match e {
+    let walker = walkdir::WalkDir::new(&pages)
+        .into_iter()
+        .filter_map(|e| match e {
             Ok(entry) => Some(entry),
             Err(err) => {
                 log::warn!("failed to read entry {:?}", err);
                 None
-            },
-        }
-    });
+            }
+        });
 
     walker
         .filter(|e| e.file_type().is_file() && e.path().starts_with(&pages))
