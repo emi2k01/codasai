@@ -9,9 +9,11 @@ static THEME_DIR: include_dir::Dir<'_> = include_dir::include_dir!("runtime/them
 
 #[derive(StructOpt)]
 pub struct Opts {
-    /// Title of the guide
+    /// Title of the guide.
     title: String,
-    /// Path to the directory that will contain the project
+    /// Path to the directory that will contain the project.
+    ///
+    /// Must be empty.
     #[structopt(short, long, default_value = "./")]
     path: PathBuf,
 }

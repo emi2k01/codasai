@@ -9,6 +9,10 @@ use crate::paths;
 
 #[derive(StructOpt)]
 pub struct Opts {
+    /// Indicates under what url the exported files will be. Useful for sites like Github/Gitlab
+    /// pages
+    ///
+    /// By default, it is the current domain's root.
     #[structopt(long, default_value = "/")]
     base_url: String,
 }

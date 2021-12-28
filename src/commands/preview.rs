@@ -12,8 +12,10 @@ use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutli
 pub struct Opts {
     #[structopt(short, long)]
     _path: Option<PathBuf>,
+    /// Indicates if the browser should not be open.
     #[structopt(long)]
     no_open: bool,
+    /// Indicates if the built-in web server should not be used to serve the guide.
     #[structopt(long)]
     no_run_server: bool,
 }

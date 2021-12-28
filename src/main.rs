@@ -13,13 +13,16 @@ use structopt::StructOpt;
 
 #[derive(StructOpt)]
 enum Args {
-    /// Initializes a codasai project
+    /// Initializes a codasai project.
     Init(init::Opts),
-    /// Preview the current unsaved page
+    /// Preview the current unsaved page.
     Preview(preview::Opts),
-    /// Build the guide
+    /// Build the guide.
     Build(build::Opts),
-    /// Saves the newly added page
+    /// Saves the newly added page.
+    ///
+    /// This makes a git commit that includes the new page, your workspace directory and anything that
+    /// you already have staged.
     Save(save::Opts),
 }
 
