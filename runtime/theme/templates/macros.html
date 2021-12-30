@@ -21,3 +21,17 @@
     </a>
 <li>
 {% endmacro %}
+
+{% macro explorer() %}
+<div class="explorer">
+    <h2>Explorer</h2>
+    <ul>
+        {% for dir in page.workspace.directories %}
+            {{ self::explorer_directory(directory = dir) }}
+        {% endfor %}
+        {% for file in page.workspace.files %}
+            {{ self::explorer_file(file = file) }}
+        {% endfor %}
+    </ul>
+</div>
+{% endmacro %}

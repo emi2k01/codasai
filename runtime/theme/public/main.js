@@ -1,7 +1,10 @@
 import { parseState } from "./state_parser.js";
 
 function addLinkEvents() {
-    window.addEventListener("hashchange", applyStateFromHash);
+    window.addEventListener("hashchange", () => {
+        closeAllOffscreens();
+        applyStateFromHash();
+    });
 }
 
 function applyStateFromHash() {
@@ -101,7 +104,7 @@ function updateCodeView(fileName, code) {
 
     // - file name
     document
-        .getElementsByClassName("file-name")[0]
+        .getElementById("file-name")
         .getElementsByTagName("span")[0].innerText = fileName;
 
     // - line numbers
@@ -138,20 +141,40 @@ function disableDisabledAnchors() {
     }
 }
 
+function addOffscreenTogglerEvents() {
+    let offscreenTogglers = document.getElementsByClassName("offscreen-open");
+
+    for (let i = 0; i < offscreenTogglers.length; i++) {
+        const offscreenToggler = offscreenTogglers[i];
+        const targetId = offscreenToggler.getAttribute("data-offscreen-target");
+        const target = document.getElementById(targetId);
+        const closeButtons = target.getElementsByClassName("offscreen-close");
+
+        for (let j = 0; j < closeButtons.length; j++) {
+            closeButtons[j].addEventListener("click", () => {
+                target.classList.toggle("open");
+            });
+        }
+
+        offscreenToggler.addEventListener("click", () => {
+            target.classList.toggle("open");
+        });
+    }
+}
+
+function closeAllOffscreens() {
+    let offscreens = document.querySelectorAll(".offscreen.open");
+    for (let i = 0; i < offscreens.length; i++) {
+        offscreens[i].classList.remove("open");
+    }
+}
+
 function main() {
     applyStateFromHash();
     addLinkEvents();
     addDirectoryButtonsEvents();
     disableDisabledAnchors();
-    let indexTogglers = document.getElementsByClassName("index-toggler");
-
-    let index = document.getElementById("index");
-    for (let i = 0; i < indexTogglers.length; i++) {
-        const indexToggler = indexTogglers[i];
-        indexToggler.addEventListener("click", () => {
-            index.classList.toggle("open");
-        });
-    }
+    addOffscreenTogglerEvents();
 }
 
 function escapeHtml(unsafe)

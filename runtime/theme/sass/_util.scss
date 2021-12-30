@@ -1,0 +1,52 @@
+a.btn, button.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 0.85rem;
+    padding: 0.3em 0.6em;
+    background-color: $medium-color;
+    color: $white;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+
+    .fas, .fa {
+        font-size: 0.9em;
+    }
+
+    &.disabled {
+        color: transparentize($white, 0.5);
+        background-color: darken($color: $medium-color, $amount: 7%);
+    }
+
+    &:not(.disabled):hover {
+        background-color: darken($color: $medium-color, $amount: 5%);
+    }
+}
+
+button.disabled, a.disabled {
+    pointer-events: none;
+}
+
+.offscreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    width: 350px;
+    max-width: 100%;
+    height: 100vh;
+    padding: 1em;
+    background-color: $dark-color;
+    box-shadow: 5px 0 3px 0 $darker-color;
+    display: none;
+
+    &.open {
+        display: block;
+    }
+
+    .offscreen-close {
+        margin-bottom: 10px;
+    }
+}

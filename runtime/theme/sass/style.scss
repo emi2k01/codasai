@@ -1,7 +1,5 @@
-$darker-color: rgb(22, 20, 27);
-$dark-color: rgb(28, 25, 33);
-$medium-color: rgb(52, 46, 65);
-$white: rgb(255, 255, 255);
+@import './vars.scss';
+@import './util.scss';
 
 :root {
     // used from template
@@ -19,51 +17,17 @@ body {
     background-color: $darker-color;
 }
 
-a.btn, button.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4em;
-    font-size: 0.85rem;
-    padding: 0.3em 0.6em;
-    background-color: $medium-color;
-    color: $white;
-    text-decoration: none;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-
-    .fas, .fa {
-        font-size: 0.9em;
-    }
-
-    &.disabled {
-        color: transparentize($white, 0.5);
-        background-color: darken($color: $medium-color, $amount: 10%);
-    }
-
-    &:not(.disabled):hover {
-        background-color: darken($color: $medium-color, $amount: 5%);
+.offscreen-buttons {
+    button + button {
+        margin-left: 5px;
     }
 }
 
-#index {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    padding: 1em;
-    background-color: $dark-color;
-    box-shadow: 5px 0 3px 0 $darker-color;
+.offscreen-open[data-offscreen-target="explorer-offscreen"] {
     display: none;
+}
 
-    &.open {
-        display: block;
-    }
-
-    .index-toggler {
-        margin-bottom: 10px;
-    }
-
+#index-offscreen {
     ul {
         list-style: none;
 
@@ -119,7 +83,7 @@ header {
     flex-grow: 1;
 
     & > * + * {
-        margin-left: 10px;
+        margin-left: 5px;
     }
 
     #page {
@@ -140,7 +104,7 @@ header {
             display: none;
         }
 
-        .file-name {
+        #file-name {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -222,63 +186,8 @@ header {
     }
 
     #explorer {
-        min-width: 15%;
+        width: 15%;
         overflow-y: auto;
-
-        h2 {
-            padding: 1.5rem 1.5rem 0.75rem 1.5rem;
-        }
-
-        ul {
-            width: 100%;
-            list-style: none;
-        }
-
-        li {
-
-            &.open {
-                & > :not(ul) .folder-closed {
-                    display: none;
-                }
-            }
-
-            &:not(.open) {
-                & > ul {
-                    height: 0;
-                    overflow: hidden;
-                }
-
-                & > :not(ul) .folder-open {
-                    display: none;
-                }
-            }
-
-            button, a {
-                display: block;
-                padding: 0.2em 1.5rem;
-                width: 100%;
-                color: inherit;
-                background-color: transparent;
-                border: none;
-                text-align: left;
-                text-decoration: none;
-                font-size: 0.9rem;
-
-                &:hover {
-                    cursor: pointer;
-                    background-color: $medium-color;
-                }
-            }
-
-            span {
-                display: flex;
-                align-items: center;
-
-                i {
-                    margin-right: 0.35rem;
-                }
-            }
-        }
     }
 
     & > * {
@@ -286,8 +195,94 @@ header {
     }
 }
 
-a.disabled {
-    pointer-events: none;
+.explorer {
+    color: $white;
+
+    h2 {
+        padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+    }
+
+    ul {
+        width: 100%;
+        list-style: none;
+    }
+
+    li {
+
+        &.open {
+            & > :not(ul) .folder-closed {
+                display: none;
+            }
+        }
+
+        &:not(.open) {
+            & > ul {
+                height: 0;
+                overflow: hidden;
+            }
+
+            & > :not(ul) .folder-open {
+                display: none;
+            }
+        }
+
+        button, a {
+            display: block;
+            padding: 0.2em 1.5rem;
+            width: 100%;
+            color: inherit;
+            background-color: transparent;
+            border: none;
+            text-align: left;
+            text-decoration: none;
+            font-size: 0.9rem;
+
+            &:hover {
+                cursor: pointer;
+                background-color: $medium-color;
+            }
+        }
+
+        span {
+            display: flex;
+            align-items: center;
+
+            i {
+                margin-right: 0.35rem;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    .offscreen-open[data-offscreen-target="explorer-offscreen"] {
+        display: block;
+    }
+
+    #explorer {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .three-columns {
+        flex-direction: column;
+
+        & > * + * {
+            margin-left: 0;
+            margin-top: 5px;
+        }
+
+        #page {
+            width: 100%;
+            height: 50%;
+        }
+
+        #file-viewer {
+            width: 100%;
+            height: 50%;
+        }
+    }
 }
 
 @import './markdown.scss';

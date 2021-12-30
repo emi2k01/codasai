@@ -13,40 +13,53 @@
 </head>
 
 <body data-workspace-url='{{ guide.base_url | url_join(with=page.code) | url_join(with="workspace") }}'>
-    <div id="index">
-        <button class="btn index-toggler"><span class="fas fa-times" aria-hidden></span>Close</button>
+    <div id="index-offscreen" class="offscreen">
+        <button class="btn offscreen-close">
+            <span class="fas fa-times" aria-label="Close"></span>
+        </button>
         <ul>
         {% for entry in guide.index.entries %}
-            <li><a href="{{ guide.base_url | url_join(with=entry.code) }}">{{ entry.name }}</a></li>
+            <li>
+                <a href="{{ guide.base_url | url_join(with=entry.code) }}">
+                    {{ entry.name }}
+                </a>
+            </li>
         {% endfor %}
         </ul>
     </div>
+    <div id="explorer-offscreen" class="offscreen">
+        <button class="btn offscreen-close">
+            <span class="fas fa-times" aria-label="Close"></span>
+        </button>
+        {{ macros::explorer() }}
+    </div>
     <div id="wrapper">
         <header>
-            <div>
-                <button class="btn index-toggler"><span class="fas fa-bars" aria-hidden></span>Index</button>
+            <div class="offscreen-buttons">
+                <button class="btn offscreen-open" data-offscreen-target="index-offscreen">
+                    <span class="fas fa-bars" aria-label="Index"></span>
+                </button>
+                <button class="btn offscreen-open" data-offscreen-target="explorer-offscreen">
+                    <span class="fas fa-folder-open" aria-label="Explorer"></span>
+                </button>
             </div>
             <div>
                 {% if page.previous_page_code %}
                     <a href="{{ guide.base_url | url_join(with=page.previous_page_code) }}" class="btn" title="TODO">
-                        <span class="fas fa-arrow-left" aria-hidden="true"></span>
-                        Previous page
+                        <span class="fas fa-arrow-left" aria-label="Previous page"></span>
                     </a>
                 {% else %}
-                    <a href="#" title="TODO" class="btn disabled">
-                        <span class="fas fa-arrow-left" aria-hidden="true"></span>
-                        Previous page
+                    <a href="#" class="btn disabled">
+                        <span class="fas fa-arrow-left" aria-label="Previous page"></span>
                     </a>
                 {% endif %}
                 {% if page.next_page_code %}
                     <a href="{{ guide.base_url | url_join(with=page.next_page_code) }}" class="btn" title="TODO">
-                        Next page
-                        <span class="fas fa-arrow-right" aria-hidden="true"></span>
+                        <span class="fas fa-arrow-right" aria-label="Next page"></span>
                     </a>
                 {% else %}
-                    <a href="#" title="TODO" class="btn disabled">
-                        Next page
-                        <span class="fas fa-arrow-right" aria-hidden="true"></span>
+                    <a href="#" class="btn disabled">
+                        <span class="fas fa-arrow-right" aria-label="Next page"></span>
                     </a>
                 {% endif %}
             </div>
@@ -54,7 +67,7 @@
         <div class="three-columns">
             <main id="page" class="markdown-body">{{ page.content | safe }}</main>
             <section id="file-viewer" class="closed">
-                <div class="file-name"><span></span></div>
+                <div id="file-name"><span></span></div>
                 <div class="code-viewer">
                     <div class="line-numbers">
                         <a href="#">1</a>
@@ -68,15 +81,7 @@
                 </div>
             </section>
             <section id="explorer">
-                <h2>Explorer</h2>
-                <ul>
-                    {% for dir in page.workspace.directories %}
-                        {{ macros::explorer_directory(directory = dir) }}
-                    {% endfor %}
-                    {% for file in page.workspace.files %}
-                        {{ macros::explorer_file(file = file) }}
-                    {% endfor %}
-                </ul>
+                {{ macros::explorer() }}
             </section>
         </div>
     </div>
