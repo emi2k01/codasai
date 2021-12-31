@@ -23,7 +23,10 @@ include_dir = "0.7.2"
 toml = "0.5.8"
 server = { path = "packages/server" }
 
+[build-dependencies]
+syntect = "4.6.0"
+
 [workspace]
 members = [
-    "packages/server"
+    "packages/server",
 ]

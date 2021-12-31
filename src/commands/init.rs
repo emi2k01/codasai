@@ -38,7 +38,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
     let title = escape_toml_string(&opts.title);
     std::fs::write(&guide_toml, format!("title = \"{}\"", title))?;
 
-    std::fs::create_dir(path.join("public")).context("failed to create `public/` directory")?;
+    std::fs::create_dir(path.join("static")).context("failed to create `static/` directory")?;
     std::fs::create_dir(path.join("workspace"))
         .context("failed to create `workspace/` directory")?;
     std::fs::create_dir(path.join("pages")).context("failed to create `pages/` directory")?;

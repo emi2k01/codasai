@@ -18,9 +18,10 @@ pub struct Opts {
 }
 
 pub fn execute(opts: &Opts) -> Result<()> {
-    let project = paths::project()?;
+    let project_paths = paths::ProjectPaths::new()?;
+    let project = project_paths.project.clone();
 
-    crate::export::export_public_files(&project)?;
+    crate::export::export_public_files(&project_paths)?;
     let index = Index::from_project(&project)?;
     let guide_ctx = GuideContext {
         index: index.clone(),

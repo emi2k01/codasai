@@ -22,11 +22,10 @@ pub struct Opts {
 
 pub fn execute(opts: &Opts) -> Result<()> {
     // TODO: Take `--path` into account
-    let project =
-        crate::paths::project().context("current directory is not in a codasai project")?;
-    let export_dir = project.join(".codasai/export");
+    let project_paths = crate::paths::ProjectPaths::new()?;
+    let project = &project_paths.project;
+    let export_dir = &project_paths.export;
     let preview_dir = export_dir.join("preview");
-    let public_dir = export_dir.join("public");
 
     // clean previous build
     if preview_dir.exists() {
@@ -34,7 +33,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
             .with_context(|| format!("failed to remove directory {:?}", preview_dir))?;
     }
 
-    crate::export::export_public_files(&project)?;
+    crate::export::export_public_files(&project_paths)?;
     export_workspace(&project).context("failed to render workspace")?;
 
     let template_engine = crate::page::read_theme_templates(&project)?;

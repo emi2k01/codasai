@@ -2,27 +2,46 @@ use std::ffi::OsStr;
 use std::path::Path;
 
 use anyhow::{Context, Result};
+use syntect::{highlighting::ThemeSet, html::css_for_theme_with_class_style};
 use walkdir::WalkDir;
 
+use crate::paths::ProjectPaths;
+
 /// Takes care of exporting all files needed by the guide such as images, css, etc.
-pub fn export_public_files(project: &Path) -> Result<()> {
-    let public_dir = project.join(".codasai/export/public");
+pub fn export_public_files(project: &ProjectPaths) -> Result<()> {
+    std::fs::remove_dir_all(&project.export).context("failed to remove export directory")?;
 
-    if public_dir.exists() {
-        std::fs::remove_dir_all(&public_dir).context("failed to remove public dir")?;
-    }
-
-    export_user_public_dir(project).context("failed to export public directory")?;
-    copy_theme_public_dir(project).context("failed to export theme public directory")?;
+    export_user_static_dir(project).context("failed to export public directory")?;
+    copy_theme_static_dir(project).context("failed to export theme public directory")?;
     compile_sass(project).context("failed to render sass files")?;
+    compile_syntax_themes(project).context("failed to compile syntax themes")?;
+
+    Ok(())
+}
+
+/// Compiles the `.thTheme` provided by the project's theme.
+fn compile_syntax_themes(project: &ProjectPaths) -> Result<()> {
+    let themes_dir = project.theme.join("syntax");
+    let out_dir = project.export.join("public/theme/syntax");
+    std::fs::create_dir_all(&out_dir)
+        .with_context(|| format!("failed to create directory {:?}", out_dir))?;
+
+    let themes = ThemeSet::load_from_folder(&themes_dir).expect("failed to read themes directory");
+
+    for (name, theme) in themes.themes.iter() {
+        let css = css_for_theme_with_class_style(theme, crate::code::CLASS_STYLE);
+        let out_path = out_dir.join(name).with_extension("css");
+        std::fs::write(out_path, css)
+            .with_context(|| format!("failed to write theme {:?}", name))?;
+    }
 
     Ok(())
 }
 
 /// Compiles the project's theme sass to the exported public directory
-fn compile_sass(project: &Path) -> Result<()> {
-    let sass_dir = project.join(".codasai/theme/sass");
-    let out_dir = project.join(".codasai/export/public/style");
+fn compile_sass(project: &ProjectPaths) -> Result<()> {
+    let sass_dir = project.theme.join("sass");
+    let out_dir = project.export.join("public/theme/style");
 
     let walkdir = WalkDir::new(&sass_dir)
         .into_iter()
@@ -74,18 +93,18 @@ fn compile_sass(project: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Exports the public directory provided by the author of the project's theme.
-fn copy_theme_public_dir(project: &Path) -> Result<()> {
-    let public = project.join(".codasai/theme/public");
-    let dest = project.join(".codasai/export/public/theme");
+/// Exports the static directory provided by the author of the project's theme.
+fn copy_theme_static_dir(project: &ProjectPaths) -> Result<()> {
+    let public = project.theme.join("static");
+    let dest = project.export.join("public/theme");
 
     copy_dir_contents(&public, &dest)
 }
 
-/// Exports the public directory provided by the author of the guide.
-fn export_user_public_dir(project: &Path) -> Result<()> {
-    let public = project.join("public");
-    let dest = project.join(".codasai/export/public");
+/// Exports the static directory provided by the author of the guide.
+fn export_user_static_dir(project: &ProjectPaths) -> Result<()> {
+    let public = project.user_static.clone();
+    let dest = project.export.join("public/user");
 
     copy_dir_contents(&public, &dest)
 }

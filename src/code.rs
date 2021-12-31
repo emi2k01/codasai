@@ -1,19 +1,21 @@
 use once_cell::unsync::Lazy;
-use syntect::highlighting::ThemeSet;
 use syntect::html::{ClassStyle, ClassedHTMLGenerator};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
 use crate::html;
 
+static SYNTAX_SET_DUMP_BIN: &'static [u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/syntaxset.packdump"));
+
 thread_local! {
     static SYNTAX_SET: Lazy<SyntaxSet> = Lazy::new(|| {
-        SyntaxSet::load_defaults_newlines()
-    });
-    static THEME_SET: Lazy<ThemeSet> = Lazy::new(|| {
-        ThemeSet::load_defaults()
+        syntect::dumps::from_binary(SYNTAX_SET_DUMP_BIN)
     });
 }
+
+pub const CLASS_STYLE: ClassStyle = ClassStyle::SpacedPrefixed {
+    prefix: "csai-code-",
+};
 
 /// Escapes and highlights `code` using `ext` as the file extension to select the language's syntax.
 ///
@@ -26,7 +28,7 @@ pub fn escape_and_highlight(code: &str, ext: &str) -> String {
             // If another library is used in the future, make sure `code` is
             // escaped in this branch.
             let mut html_generator =
-                ClassedHTMLGenerator::new_with_class_style(syntax, ss, ClassStyle::Spaced);
+                ClassedHTMLGenerator::new_with_class_style(syntax, ss, CLASS_STYLE);
 
             for line in LinesWithEndings::from(code) {
                 html_generator.parse_html_for_line_which_includes_newline(line);

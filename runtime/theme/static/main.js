@@ -31,10 +31,9 @@ function applyState(state) {
         let toRegex = new RegExp(to, "m");
 
         openFile(file, function() {
-            // we use a duplicate of the code block with transparent font color
-            // so that we highlight blocks align with the code since we don't
-            // want to lose the syntax highlighting and we want to avoid mixing
-            // the HTML tags for line highlighting and syntax highlighting
+            // We use a copy of the `code#code-block` tag that has transparent font
+            // color. This way we can highlight the background of the code
+            // without disturbing the syntax highlighting.
             let codeBgEl = document.getElementById("code-block-bg");
             let code = codeBgEl.innerText;
 
@@ -42,20 +41,23 @@ function applyState(state) {
             if (fromIdx == -1) {
                 return;
             }
-            // we start searching after `fromIdx` but we need the index to be
-            // based on the whole code so we add the `fromIdx` (plus 1 'cause
-            // 0-based)
-            let toIdx = code.substring(fromIdx+1).search(toRegex) + fromIdx+1;
+
+            // we start searching from `fromIdx+1` but we need the index to be
+            // absolute with respect to `code`, so we add `fromIdx+1` to the
+            // resulting index.
+            let toIdx = code.substring(fromIdx + 1).search(toRegex) + fromIdx + 1;
             if (toIdx == -1) {
                 return;
             }
 
+            // from start to first highlight span
             let codeHtmlHighlighted = escapeHtml(code.substring(0, fromIdx));
             codeHtmlHighlighted += "<span class='highlight'>";
-            codeHtmlHighlighted += escapeHtml(code.substring(fromIdx, toIdx+1));
+            // from first highlight span to second highlight span
+            codeHtmlHighlighted += escapeHtml(code.substring(fromIdx, toIdx + 1));
             codeHtmlHighlighted += "</span>";
             // we don't need the rest of the code since we only use the code
-            // for alignment
+            // for alignment.
 
             codeBgEl.innerHTML = codeHtmlHighlighted;
         });
@@ -67,7 +69,7 @@ function addDirectoryButtonsEvents() {
 
     for (let i = 0; i < dirButtons.length; i++) {
         const dirButton = dirButtons[i];
-        dirButton.addEventListener("click", function (event) {
+        dirButton.addEventListener("click", function(event) {
             event.currentTarget.parentNode.classList.toggle("open");
         });
     }
@@ -169,6 +171,15 @@ function closeAllOffscreens() {
     }
 }
 
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function main() {
     applyStateFromHash();
     addLinkEvents();
@@ -176,15 +187,5 @@ function main() {
     disableDisabledAnchors();
     addOffscreenTogglerEvents();
 }
-
-function escapeHtml(unsafe)
-{
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
- }
 
 main();
