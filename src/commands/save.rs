@@ -1,11 +1,11 @@
 use std::process::Command;
 
 use anyhow::{Context, Result};
-use structopt::StructOpt;
+use clap::Parser;
 
 use crate::context::{Index, IndexEntry};
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub struct Opts {}
 
 pub fn execute(_opts: &Opts) -> Result<()> {

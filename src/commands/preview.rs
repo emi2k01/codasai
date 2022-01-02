@@ -2,21 +2,21 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use ignore::Walk;
-use structopt::StructOpt;
+use clap::Parser;
 use tera::Tera;
 
 use crate::code;
 use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder};
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub struct Opts {
-    #[structopt(short, long)]
+    #[clap(short, long)]
     _path: Option<PathBuf>,
     /// Indicates if the browser should not be open.
-    #[structopt(long)]
+    #[clap(long)]
     no_open: bool,
     /// Indicates if the built-in web server should not be used to serve the guide.
-    #[structopt(long)]
+    #[clap(long)]
     no_run_server: bool,
 }
 

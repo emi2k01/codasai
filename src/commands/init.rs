@@ -1,20 +1,20 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use structopt::StructOpt;
+use clap::Parser;
 
 use crate::context::Index;
 
 static THEME_DIR: include_dir::Dir<'_> = include_dir::include_dir!("runtime/theme");
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub struct Opts {
     /// Title of the guide.
     title: String,
     /// Path to the directory that will contain the project.
     ///
     /// Must be empty.
-    #[structopt(short, long, default_value = "./")]
+    #[clap(short, long, default_value = "./")]
     path: PathBuf,
 }
 

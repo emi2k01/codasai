@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-structopt = "0.3.25"
-clap = "2.33.0"
+clap = { version = "3.0.0", features = ["derive"] }
 git2 = "0.13.25"
 anyhow = "1.0.51"
 walkdir = "2.3.2"

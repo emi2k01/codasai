@@ -2,18 +2,18 @@ use std::ffi::OsString;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use structopt::StructOpt;
+use clap::Parser;
 
 use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder};
 use crate::paths;
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub struct Opts {
     /// Indicates under what url the exported files will be. Useful for sites like Github/Gitlab
     /// pages
     ///
     /// By default, it is the current domain's root.
-    #[structopt(long, default_value = "/")]
+    #[clap(long, default_value = "/")]
     base_url: String,
 }
 
