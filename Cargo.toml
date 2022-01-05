@@ -29,3 +29,10 @@ syntect = "4.6.0"
 members = [
     "packages/server",
 ]
+
+[profile.fast-dev]
+inherits = "dev"
+debug = false
+
+[profile.fast-dev.package."*"]
+opt-level = 2
