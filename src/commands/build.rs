@@ -4,7 +4,9 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use clap::Parser;
 
-use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder};
+use crate::context::{
+    Directory, GlobalContext, GuideContext, Index, PageContext, WorkspaceOutlineBuilder,
+};
 use crate::paths;
 
 #[derive(Parser)]
@@ -62,7 +64,12 @@ pub fn execute(opts: &Opts) -> Result<()> {
         };
 
         let out_dir = project.join(format!(".codasai/export/{}", index.entries[page_num].code));
-        export_page(&guide_ctx, &page_ctx, &project, &out_dir)?;
+
+        let context = GlobalContext {
+            page: &page_ctx,
+            guide: &guide_ctx,
+        };
+        export_page(&context, &project, &out_dir)?;
 
         let workspace_dir = out_dir.join("workspace");
         export_workspace(&repo, &tree, &workspace_dir)?;
@@ -174,20 +181,15 @@ fn export_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path
 }
 
 /// Exports the page with the given contexts to `out_dir/index.html`
-fn export_page(
-    guide_ctx: &GuideContext, page_ctx: &PageContext, project: &Path, out_dir: &Path,
-) -> Result<()> {
+fn export_page(ctx: &GlobalContext, project: &Path, out_dir: &Path) -> Result<()> {
     std::fs::create_dir_all(&out_dir)
         .with_context(|| format!("failed to create dir {:?}", &out_dir))?;
 
-    let tera_engine = crate::page::read_theme_templates(project).context("failed to read templates")?;
+    let templates =
+        crate::page::read_theme_templates(project).context("failed to read templates")?;
 
-    let mut context = tera::Context::new();
-    context.insert("guide", &guide_ctx);
-    context.insert("page", &page_ctx);
-
-    let output_html = tera_engine
-        .render("template.html", &context)
+    let output_html = templates
+        .render("template", &tera::Context::from_serialize(&ctx)?)
         .context("failed to render template")?;
 
     let out_path = out_dir.join("index.html");

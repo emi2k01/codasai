@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
+use tera::Tera;
 use ignore::Walk;
 use clap::Parser;
-use tera::Tera;
 
 use crate::code;
-use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder};
+use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder, GlobalContext};
 
 #[derive(Parser)]
 pub struct Opts {
@@ -182,11 +182,13 @@ pub fn export_unsaved_page(project: &Path, template_engine: &Tera) -> Result<()>
         next_page_code: None,
     };
 
-    let mut context = tera::Context::new();
-    context.insert("page", &page_context);
-    context.insert("guide", &guide_context);
+    let context = GlobalContext {
+        page: &page_context,
+        guide: &guide_context,
+    };
+
     let reader_html = template_engine
-        .render("template.html", &context)
+        .render("template.html", &tera::Context::from_serialize(&context)?)
         .context("failed to render template")?;
 
     let preview = project.join(".codasai/export/preview");
