@@ -9,7 +9,9 @@ use crate::paths::ProjectPaths;
 
 /// Takes care of exporting all files needed by the guide such as images, css, etc.
 pub fn export_public_files(project: &ProjectPaths) -> Result<()> {
-    std::fs::remove_dir_all(&project.export).context("failed to remove export directory")?;
+    if project.export.exists() {
+        std::fs::remove_dir_all(&project.export).context("failed to remove export directory")?;
+    }
 
     export_user_static_dir(project).context("failed to export public directory")?;
     copy_theme_static_dir(project).context("failed to export theme public directory")?;
