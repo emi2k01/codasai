@@ -1,0 +1,26 @@
+{% import "offscreen/macros.html" as offscreen %}
+
+<header>
+    <div class="offscreen-buttons">
+        {{offscreen::button(id="index", icon="list", class="primary")}}
+        {{offscreen::button(id="explorer", icon="account_tree", class="primary")}}
+    </div>
+
+    <div class="title">
+        <span>{{page.title}}
+    </div>
+
+    <div class="pagination-buttons button-group">
+        {# {% if page.previous_page_code %} #}
+        <a class="button primary" href="#">
+            <span class="material-icons-round md-18" aria-label="Previous page">arrow_back_ios</span>
+        </a>
+        {# {% endif %} #}
+
+        {# {% if page.next_page_code %} #}
+        <a class="button primary" href="#">
+            <span class="material-icons-round md-18" aria-label="Next page">arrow_forward_ios</span>
+        </a>
+        {# {% endif %} #}
+    </div>
+</header>

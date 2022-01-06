@@ -1,0 +1,43 @@
+.material-icons-round.md-18 { font-size: 18px; }
+.material-icons-round.md-24 { font-size: 24px; }
+.material-icons-round.md-36 { font-size: 36px; }
+.material-icons-round.md-48 { font-size: 48px; }
+
+.button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    border-radius: var(--button-border-radius);
+    padding: 2px 5px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.button.primary {
+    background-color: RGB(var(--button-primary-bg));
+    color: RGB(var(--button-primary-fg));
+    transition: all 0.08s ease-in;
+
+    &:hover {
+        background-color: RGB(var(--button-primary-bg-hover));
+    }
+}
+
+.button-group {
+    display: inline-flex;
+
+    & > .button {
+        border-radius: 0;
+    }
+
+    & > .button:first-child {
+        border-top-left-radius: var(--button-border-radius);
+        border-bottom-left-radius: var(--button-border-radius);
+    }
+
+    & > .button:last-child {
+        border-top-right-radius: var(--button-border-radius);
+        border-bottom-right-radius: var(--button-border-radius);
+    }
+}

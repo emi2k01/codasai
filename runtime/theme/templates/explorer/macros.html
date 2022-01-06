@@ -1,0 +1,31 @@
+{% macro dir(dir) %}
+<li>
+    <button>
+        <span  style="padding-left: calc(var(--explorer-entry-initial-margin) + var(--explorer-entry-margin-per-depth) * ({{dir.depth}} - 1))">
+            <span class="material-icons-round icon-closed">folder</span>
+            <span class="material-icons-round icon-open">folder_open</span>
+            <span>{{dir.name}}</span>
+        </span>
+    </button>
+    <ul>
+        {% for dir in dir.directories %}
+        {{self::dir(dir=dir)}}
+        {% endfor %}
+
+        {% for file in dir.files %}
+        {{self::file(file=file)}}
+        {% endfor %}
+    </ul>
+</li>
+{% endmacro %}
+
+{% macro file(file) %}
+<li>
+    <a href='#csai:open_file file="{{file.path}}"' data-path="{{file.path}}" data-name="{{file.name}}">
+        <span style="padding-left: calc(var(--explorer-entry-initial-margin) + var(--explorer-entry-margin-per-depth) * ({{file.depth}} - 1))">
+            <span class="material-icons-round">description</span>
+            <span>{{file.name}}</span>
+        </span>
+    </a>
+</li>
+{% endmacro %}

@@ -1,0 +1,11 @@
+<div id="offscreen-{% block id %}{% endblock %}" class="offscreen">
+    <div class="header">
+        <button class="close">
+            <span class="fas fa-times" aria-label="Close"></span>
+        </button>
+        <h2>{% block title %}{% endblock %}</h2>
+    </div>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</div>

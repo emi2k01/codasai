@@ -1,0 +1,26 @@
+main {
+    display: flex;
+    height: calc(100vh - var(--header-height));
+
+    .page {
+        width: 37%;
+        max-width: 90ch;
+    }
+
+    .file-viewer {
+        width: 45%;
+    }
+
+    .explorer {
+        min-width: 220px;
+        width: 18%;
+    }
+
+    & > * + * {
+        border-left: solid 2px RGB(var(--primary-color));
+    }
+}
+
+@import "page";
+@import "file-viewer";
+@import "explorer";

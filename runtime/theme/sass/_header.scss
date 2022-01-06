@@ -1,0 +1,27 @@
+header {
+    width: 100%;
+    height: var(--header-height);
+    display: flex;
+    justify-content: space-between;
+    background-color: RGB(var(--primary-color));
+    padding: 5px 30px;
+
+    .offscreen-buttons {
+        display: inline-flex;
+
+        & > .button + .button {
+            margin-left: 0.5em;
+        }
+
+        button[data-offscreen-id="offscreen-explorer"] {
+            display: none;
+        }
+    }
+
+    .title {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: RGB(var(--primary-color-fg));
+    }
+}

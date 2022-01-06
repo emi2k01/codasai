@@ -1,93 +1,14 @@
-{% import "macros.html" as macros %}
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href='{{ guide.base_url | url_join(with="public/theme/syntax/ayu-dark.css") }}' media="all">
-    <link rel="stylesheet" href='{{ guide.base_url | url_join(with="public/theme/style/style.css") }}' />
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
-    <title>{{ page.title }}</title>
+    <meta charset="UTF-8">
+    <title>{{page.title}}</title>
+    <link rel="stylesheet" href='{{guide.base_url | url_join(with="public/theme/style/style.css")}}' media="all">
+    <link rel="stylesheet" href='{{guide.base_url | url_join(with="public/theme/syntax/ayu-dark.css")}}' media="all">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 </head>
-
-<body data-workspace-url='{{ guide.base_url | url_join(with=page.code) | url_join(with="workspace") }}'>
-    <div id="index-offscreen" class="offscreen">
-        <button class="btn offscreen-close">
-            <span class="fas fa-times" aria-label="Close"></span>
-        </button>
-        <ul>
-        {% for entry in guide.index.entries %}
-            <li>
-                <a href="{{ guide.base_url | url_join(with=entry.code) }}">
-                    {{ entry.name }}
-                </a>
-            </li>
-        {% endfor %}
-        </ul>
-    </div>
-    <div id="explorer-offscreen" class="offscreen">
-        <button class="btn offscreen-close">
-            <span class="fas fa-times" aria-label="Close"></span>
-        </button>
-        {{ macros::explorer() }}
-    </div>
-    <div id="wrapper">
-        <header>
-            <div class="offscreen-buttons">
-                <button class="btn offscreen-open" data-offscreen-target="index-offscreen">
-                    <span class="fas fa-bars" aria-label="Index"></span>
-                </button>
-                <button class="btn offscreen-open" data-offscreen-target="explorer-offscreen">
-                    <span class="fas fa-folder-open" aria-label="Explorer"></span>
-                </button>
-            </div>
-            <div>
-                {% if page.previous_page_code %}
-                    <a href="{{ guide.base_url | url_join(with=page.previous_page_code) }}" class="btn" title="TODO">
-                        <span class="fas fa-arrow-left" aria-label="Previous page"></span>
-                    </a>
-                {% else %}
-                    <a href="#" class="btn disabled">
-                        <span class="fas fa-arrow-left" aria-label="Previous page"></span>
-                    </a>
-                {% endif %}
-                {% if page.next_page_code %}
-                    <a href="{{ guide.base_url | url_join(with=page.next_page_code) }}" class="btn" title="TODO">
-                        <span class="fas fa-arrow-right" aria-label="Next page"></span>
-                    </a>
-                {% else %}
-                    <a href="#" class="btn disabled">
-                        <span class="fas fa-arrow-right" aria-label="Next page"></span>
-                    </a>
-                {% endif %}
-            </div>
-        </header>
-        <div class="three-columns">
-            <main id="page" class="markdown-body">{{ page.content | safe }}</main>
-            <section id="file-viewer" class="closed">
-                <div id="file-name"><span></span></div>
-                <div class="code-viewer">
-                    <div class="line-numbers">
-                        <a href="#">1</a>
-                        <a href="#">2</a>
-                        <a href="#">3</a>
-                    </div>
-                    <!-- `#code-block-bg is a duplicate of #code-block use for
-                        alignment purposes when we want to highlight lines
-                        without disturbing the syntax highlighting` -->
-                    <pre><code id="code-block"></code><code id="code-block-bg"></code></pre>
-                </div>
-            </section>
-            <section id="explorer">
-                {{ macros::explorer() }}
-            </section>
-        </div>
-    </div>
-    <script type="module" src="{{ guide.base_url | url_join(with='public/theme/main.js') }}"></script>
+<body>
+    {% include "header.html" %}
+    {% include "main.html" %}
 </body>
-
 </html>
-

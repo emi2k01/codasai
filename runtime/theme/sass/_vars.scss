@@ -1,4 +1,23 @@
-$darker-color: rgb(22, 20, 27);
-$dark-color: rgb(28, 25, 33);
-$medium-color: rgb(52, 46, 65);
-$white: rgb(255, 255, 255);
+
+// Properties use RGB(var(--variable)) instead of `rgb(var(--variable))` to prevent
+// sass from parsing `rgb` as a sass function, otherwise we get a parsing error.
+html {
+    --header-height: 40px;
+    --file-viewer-line-height: 1.2em;
+
+    --body-bg: 225, 225, 219;
+    --body-fg: 11, 20, 18;
+    --primary-color: 39, 80, 70;
+    --primary-color-fg: 255, 255, 255;
+    --button-primary-bg: 61, 126, 115;
+    --button-primary-fg: 255, 255, 255;
+    --button-primary-bg-hover: 72, 170, 152;
+    --button-primary-fg-hover: var(--button-primary-fg);
+    --button-border-radius: 5px;
+
+    --explorer-entry-bg: var(--body-bg);
+    --explorer-entry-bg-hover: 200, 198, 186;
+    --explorer-entry-fg: var(--body-fg);
+    --explorer-entry-initial-margin: 20px;
+    --explorer-entry-margin-per-depth: 10px;
+}

@@ -1,0 +1,8 @@
+{% macro button(id, icon="", text="", class="") %}
+<button class="button {{class}}" data-offscreen-id="offscreen-{{id}}">
+    <span class="material-icons-round">{{icon}}</span>
+    {% if text %}
+    <span>{{text}}</span>
+    {% endif %}
+</button>
+{% endmacro %}

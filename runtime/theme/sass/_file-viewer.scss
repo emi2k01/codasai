@@ -1,0 +1,58 @@
+.file-viewer {
+    padding: 10px 20px;
+
+    .file-name-tab {
+        margin-bottom: 10px;
+    }
+
+    .numbered-file-contents {
+        display: flex;
+    }
+
+    .line-numbers, code {
+        font-family: monospace;
+        font-size: 1rem;
+        // align line numbers with content lines
+        line-height: var(--file-viewer-line-height);
+    }
+
+    .file-contents, pre, code {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .line-numbers {
+        user-select: none;
+        min-width: 35px;
+        text-align: right;
+        padding-right: 10px;
+        flex-shrink: 0;
+        a {
+            display: block;
+            width: 100%;
+            font-size: 0.72em;
+            text-decoration: none;
+            color: var(--primary-color)
+        }
+    }
+
+    pre {
+        position: relative;
+        overflow-x: auto;
+
+        code {
+            display: block;
+        }
+
+        code.copy {
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+
+            &, * {
+                color: transparent !important;
+            }
+        }
+    }
+}

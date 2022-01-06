@@ -1,0 +1,15 @@
+{% extends "offscreen/offscreen.html" %}
+
+{% block id %}index{% endblock %}
+{% block title %}Index{% endblock %}
+{% block content %}
+<ul>
+    {% for entry in guide.index.entries %}
+    <li>
+        <a href="{{guide.base_url | url_join(with=entry.code)}}">
+            {{entry.name}}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
