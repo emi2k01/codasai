@@ -1,3 +1,5 @@
+$explorer-hide-bp: 1000px;
+$two-columns-bp: 620px;
 
 // Properties use RGB(var(--variable)) instead of `rgb(var(--variable))` to prevent
 // sass from parsing `rgb` as a sass function, otherwise we get a parsing error.

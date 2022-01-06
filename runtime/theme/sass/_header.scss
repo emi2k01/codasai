@@ -25,3 +25,10 @@ header {
         color: RGB(var(--primary-color-fg));
     }
 }
+
+@media screen and (max-width: $explorer-hide-bp) {
+    header .offscreen-buttons
+    button[data-offscreen-id="offscreen-explorer"] {
+        display: initial;
+    }
+}

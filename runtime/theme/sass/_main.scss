@@ -5,10 +5,12 @@ main {
     .page {
         width: 37%;
         max-width: 90ch;
+        flex-shrink: 0;
     }
 
     .file-viewer {
-        width: 45%;
+        min-width: 0;
+        width: auto;
     }
 
     .explorer {
@@ -18,6 +20,37 @@ main {
 
     & > * + * {
         border-left: solid 2px RGB(var(--primary-color));
+    }
+}
+
+@media screen and (max-width: $explorer-hide-bp) {
+    main {
+        .page {
+            width: 43%;
+        }
+
+        .explorer {
+            display: none;
+        }
+    }
+}
+
+@media screen and (max-width: $two-columns-bp) {
+    main {
+        flex-direction: column;
+
+        .page {
+            height: 50%;
+        }
+
+        .file-viewer {
+            height: 50%;
+        }
+
+        & > * + * {
+            border-left: none;
+            border-top: solid 2px RGB(var(--primary-color));
+        }
     }
 }
 
