@@ -1,0 +1,18 @@
+<li>
+    <button>
+        <span  style="padding-left: calc(var(--explorer-entry-initial-margin) + var(--explorer-entry-margin-per-depth) * ({{dir.depth}} - 1))">
+            <span class="material-icons-round icon-closed">folder</span>
+            <span class="material-icons-round icon-open">folder_open</span>
+            <span>{{dir.name}}</span>
+        </span>
+    </button>
+    <ul>
+        {% for dir in dir.directories %}
+        {% include "explorer/dir.html" %}
+        {% endfor %}
+
+        {% for file in dir.files %}
+        {% include "explorer/file.html" %}
+        {% endfor %}
+    </ul>
+</li>

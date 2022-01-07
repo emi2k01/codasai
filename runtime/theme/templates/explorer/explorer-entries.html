@@ -1,11 +1,9 @@
-{% import "explorer/macros.html" as explorer %}
-
 <ul class="explorer-entries">
 {% for dir in page.workspace.directories %}
-{{self::dir(dir=dir)}}
+{% include "explorer/dir.html" %}
 {% endfor %}
 
 {% for file in page.workspace.files %}
-{{self::file(file=file)}}
+{% include "explorer/file.html" %}
 {% endfor %}
 </ul>

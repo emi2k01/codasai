@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use git2::Status;
 use pulldown_cmark::Parser;
-use tera::Tera;
+use minijinja::{Environment, Source};
 
 /// Converts markdown to sanitized html.
 pub fn markdown_to_html(markdown: &str) -> String {
@@ -41,59 +41,25 @@ pub fn extract_title(page: &str) -> String {
     String::from("Untitled")
 }
 
-pub fn read_theme_templates(project: &Path) -> Result<Tera> {
-    use std::collections::HashMap;
-
-    use tera::Value;
-
+pub fn read_theme_templates(project: &Path) -> Result<Environment> {
     let templates_dir = project.join(".codasai/theme/templates");
-    let mut templates_glob = templates_dir
-        .to_str()
-        .ok_or(anyhow::anyhow!("templates path is not valid UTF-8"))?
-        .to_string();
-    templates_glob.push_str("/*.html");
 
-    let mut engine = Tera::new(&templates_glob).context("failed to build template engine")?;
+    let mut engine = Environment::new();
+    let mut source = Source::new();
+    source.load_from_path(&templates_dir, &["html"])?;
+    engine.set_source(source);
 
-    engine.register_filter(
-        "url_join",
-        |base_url: &Value, args: &HashMap<String, Value>| {
-            let base_url = match base_url {
-                Value::String(ref v) => v.clone(),
-                Value::Number(ref v) => v.to_string(),
-                _ => return Err(tera::Error::msg("expected base url to be of type `string`")),
-            };
+    fn url_join(_state: &minijinja::State, base_url: String, fragment: String) -> Result<String, minijinja::Error> {
+        let fragment = Path::new(&fragment);
+        let relative_fragment = fragment.strip_prefix("/").unwrap_or(fragment);
 
-            let with = match args.get("with") {
-                Some(&Value::String(ref v)) => v.clone(),
-                Some(&Value::Number(ref v)) => v.to_string(),
-                Some(_) => {
-                    return Err(tera::Error::msg(
-                        "expected argument `with` to be of type `string` or `number`",
-                    ))
-                },
-                None => {
-                    return Err(tera::Error::msg(
-                        "expected argument `with` of type `string` or `number`",
-                    ))
-                },
-            };
-
-            let with = Path::new(&with);
-            let relative_with = if with.has_root() {
-                with.strip_prefix("/")
-                    .expect("path should've started with root")
-            } else {
-                with
-            };
-
-            Ok(Path::new(&base_url)
-                .join(relative_with)
-                .display()
-                .to_string()
-                .into())
-        },
-    );
+        Ok(Path::new(&base_url)
+            .join(relative_fragment)
+            .display()
+            .to_string()
+            .into())
+    }
+    engine.add_filter("url_join", url_join);
 
     Ok(engine)
 }

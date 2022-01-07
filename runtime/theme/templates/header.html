@@ -1,9 +1,11 @@
-{% import "offscreen/macros.html" as offscreen %}
-
 <header>
     <div class="offscreen-buttons">
-        {{offscreen::button(id="index", icon="list", class="primary")}}
-        {{offscreen::button(id="explorer", icon="account_tree", class="primary")}}
+        {% with id="index", icon="list", class="primary" %}
+        {% include "offscreen/button.html" %}
+        {% endwith %}
+        {% with id="explorer", icon="account_tree", class="primary" %}
+        {% include "offscreen/button.html" %}
+        {% endwith %}
     </div>
 
     <div class="title">

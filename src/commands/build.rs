@@ -189,7 +189,8 @@ fn export_page(ctx: &GlobalContext, project: &Path, out_dir: &Path) -> Result<()
         crate::page::read_theme_templates(project).context("failed to read templates")?;
 
     let output_html = templates
-        .render("template", &tera::Context::from_serialize(&ctx)?)
+        .get_template("template")?
+        .render(&ctx)
         .context("failed to render template")?;
 
     let out_path = out_dir.join("index.html");

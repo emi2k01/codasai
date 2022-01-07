@@ -1,9 +1,9 @@
 <div id="offscreen-{% block id %}{% endblock %}" class="offscreen">
     <div class="header">
-        <button class="close">
-            <span class="fas fa-times" aria-label="Close"></span>
-        </button>
         <h2>{% block title %}{% endblock %}</h2>
+        {% with id=self.id(), class="primary md-18", icon="close" %}
+        {% include "offscreen/button.html" %}
+        {% endwith %}
     </div>
     <div class="content">
         {% block content %}{% endblock %}

@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use tera::Tera;
+use minijinja::Environment;
 use ignore::Walk;
 use clap::Parser;
 
@@ -155,7 +155,7 @@ fn export_workspace_file(file: &Path, project: &Path, preview_ws: &Path) -> Resu
 /// Exports the unsaved page in the project.
 ///
 /// It uses `template.html` in `template_engine` to render the page.
-pub fn export_unsaved_page(project: &Path, template_engine: &Tera) -> Result<()> {
+pub fn export_unsaved_page(project: &Path, template_engine: &Environment) -> Result<()> {
     let page = crate::page::find_unsaved_page(project).context("failed to find new page")?;
     let page = page.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
     // `page` as given by git2 is relative to the git repository root but we need
@@ -188,7 +188,8 @@ pub fn export_unsaved_page(project: &Path, template_engine: &Tera) -> Result<()>
     };
 
     let reader_html = template_engine
-        .render("template.html", &tera::Context::from_serialize(&context)?)
+        .get_template("template.html")?
+        .render(&context)
         .context("failed to render template")?;
 
     let preview = project.join(".codasai/export/preview");
