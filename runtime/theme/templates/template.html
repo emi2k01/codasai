@@ -11,6 +11,10 @@
 <body>
     {% include "header.html" %}
     {% include "main.html" %}
+    {% include "offscreen/explorer.html" %}
+    {% include "offscreen/index.html" %}
+    {% include "offscreen/dimmer.html" %}
+
     <script type="module" src='{{guide.base_url | url_join("public/theme/main.js")}}'></script>
 </body>
 </html>

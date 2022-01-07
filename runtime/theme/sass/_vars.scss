@@ -22,4 +22,7 @@ html {
     --explorer-entry-fg: var(--body-fg);
     --explorer-entry-initial-margin: 20px;
     --explorer-entry-margin-per-depth: 10px;
+
+    --offscreen-bg: var(--body-bg);
+    --offscreen-dimmer-bg: 0, 0, 0;
 }

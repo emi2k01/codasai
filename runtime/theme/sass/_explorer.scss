@@ -1,21 +1,19 @@
 .explorer {
-
-
     h2 {
         padding: 20px 20px 15px 20px;
     }
+}
 
-    ul {
-        list-style: none;
+.explorer-entries {
+    list-style: none;
 
-        li > a, li > button {
-            & > span {
-                display: flex;
-                align-items: center;
+    li > a, li > button {
+        & > span {
+            display: flex;
+            align-items: center;
 
-                & > * + *:not([class^="material-icons"]) {
-                    margin-left: 0.5em;
-                }
+            & > * + *:not([class^="material-icons"]) {
+                margin-left: 0.5em;
             }
         }
     }

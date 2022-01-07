@@ -18,6 +18,10 @@ main {
         width: 18%;
     }
 
+    & > * {
+        overflow: auto;
+    }
+
     & > * + * {
         border-left: solid 2px RGB(var(--primary-color));
     }
@@ -40,10 +44,12 @@ main {
         flex-direction: column;
 
         .page {
+            width: 100%;
             height: 50%;
         }
 
         .file-viewer {
+            width: 100%;
             height: 50%;
         }
 
