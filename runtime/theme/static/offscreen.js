@@ -1,15 +1,17 @@
-let dimmer = document.getElementById("dimmer");
-dimmer.addEventListener("click", closeAll);
+export default function register() {
+    let dimmer = document.getElementById("dimmer");
+    dimmer.addEventListener("click", closeAll);
 
-export default function register(elements) {
-    for (let i = 0; i < elements.length; i++) {
-        const element = elements[i];
-        registerOne(element, elements);
+    let offscreens = document.getElementsByClassName("offscreen");
+
+    for (let i = 0; i < offscreens.length; i++) {
+        const offscreen = offscreens[i];
+        registerOne(offscreen, offscreens);
     }
 }
 
-function registerOne(element, elements) {
-    let id = element.getAttribute("id");
+function registerOne(offscreen, offscreens) {
+    let id = offscreen.getAttribute("id");
     let triggersDataAttr = `button[data-offscreen-id="${id}"]`;
     let buttons = document.querySelectorAll(triggersDataAttr);
     let dimmer = document.getElementById("dimmer");
@@ -18,18 +20,18 @@ function registerOne(element, elements) {
         const button = buttons[i];
         button.addEventListener("click", () => {
             // close all other offscreens
-            for (let i = 0; i < elements.length; i++) {
-                if (element != elements[i]) {
-                    elements[i].classList.remove("open");
+            for (let i = 0; i < offscreens.length; i++) {
+                if (offscreen != offscreens[i]) {
+                    offscreens[i].classList.remove("open");
                 }
             }
 
             // toggle this offscreen
-            element.classList.toggle("open");
+            offscreen.classList.toggle("open");
 
             // open or close dimmer depending on the current state of this
             // offscreen
-            if (!element.classList.contains("open")) {
+            if (!offscreen.classList.contains("open")) {
                 dimmer.classList.remove("open");
             } else {
                 dimmer.classList.add("open");

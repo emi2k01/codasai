@@ -1,4 +1,4 @@
-export default function registerExplorers() {
+export default function register() {
     registerOpeners();
 }
 
