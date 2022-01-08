@@ -189,7 +189,7 @@ fn export_page(ctx: &GlobalContext, project: &Path, out_dir: &Path) -> Result<()
         crate::page::read_theme_templates(project).context("failed to read templates")?;
 
     let output_html = templates
-        .get_template("template")?
+        .get_template("template.html")?
         .render(&ctx)
         .context("failed to render template")?;
 
