@@ -12,16 +12,6 @@
 
     &.open {
         display: initial;
-        &.on-transition {
-            animation: offscreenOpen 0.2s ease-out;
-        }
-    }
-
-    &:not(.open) {
-        &.on-transition {
-            display: initial;
-            animation: offscreenClose 0.2s ease-out;
-        }
     }
 
     .header {
