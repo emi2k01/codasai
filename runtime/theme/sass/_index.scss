@@ -1,19 +1,23 @@
 .index-entries {
+    width: 100%;
     padding-left: 20px;
     padding-right: 20px;
 
     list-style: none;
 
     li + li {
+        width: 100%;
         margin-top: 0.5em;
     }
 
     a {
+        display: inline-block;
+        width: 100%;
         text-decoration: none;
         color: RGB(var(--body-fg));
 
         &:hover {
-            border-bottom: solid 1px RGB(var(--body-fg));
+            text-decoration: underline;
         }
     }
 }
