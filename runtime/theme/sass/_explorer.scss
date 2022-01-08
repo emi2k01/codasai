@@ -46,11 +46,11 @@
     }
 
     li.open {
-        .icon-closed {
+        & > button .icon-closed {
             display: none;
         }
 
-        .icon-open {
+        & > button .icon-open {
             display: inline;
         }
     }
