@@ -3,10 +3,10 @@
 {% block id %}index{% endblock %}
 {% block title %}Index{% endblock %}
 {% block content %}
-<ul>
+<ul class="index-entries">
     {% for entry in guide.index.entries %}
     <li>
-        <a href="{{guide.base_url | url_join(with=entry.code)}}">
+        <a href="{{guide.base_url | url_join(entry.code)}}">
             {{entry.name}}
         </a>
     </li>

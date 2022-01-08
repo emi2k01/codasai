@@ -1,0 +1,19 @@
+.index-entries {
+    padding-left: 20px;
+    padding-right: 20px;
+
+    list-style: none;
+
+    li + li {
+        margin-top: 0.5em;
+    }
+
+    a {
+        text-decoration: none;
+        color: RGB(var(--body-fg));
+
+        &:hover {
+            border-bottom: solid 1px RGB(var(--body-fg));
+        }
+    }
+}
