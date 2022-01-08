@@ -1,7 +1,78 @@
 const TOKEN_KIND_STRING = "STRING";
 const TOKEN_KIND_EQUALS = "EQUALS";
 const TOKEN_KIND_IDENT = "IDENT";
-const TOKEN_KIND_SEPARATOR = "SEPARATOR";
+
+const MAGIC_PREFIX = "#csai:";
+
+export default class StateObserver {
+    constructor() {
+        this.listeners = [];
+        this.errorCallback = null;
+
+        window.addEventListener("hashchange", () => { this.trigger() });
+    }
+
+    onAction(action, args, callback) {
+        this.listeners.push({
+            action: action,
+            args: args,
+            callback: callback,
+        })
+    }
+
+    onError(callback) {
+        this.errorListener = callback;
+    }
+
+    _emitError(error) {
+        if (this.errorListener) {
+            this.errorListener(error);
+        }
+    }
+
+    trigger() {
+        let stateStr = decodeURIComponent(window.location.hash);
+        if (stateStr.startsWith(MAGIC_PREFIX)) {
+            stateStr = stateStr.substring(MAGIC_PREFIX.length);
+
+            let state;
+            try {
+                state = parseState(stateStr);
+            } catch (e) {
+                this._emitError(e.message);
+                return;
+            }
+
+            // find listener that corresponds to this action
+            let action = state.action;
+            let listener;
+            for (let i = 0; i < this.listeners.length; i++) {
+                if (this.listeners[i].action == action) {
+                    listener = this.listeners[i];
+                    break;
+                }
+            }
+
+            if (!listener) {
+                return;
+            }
+
+            // get args asked by the listener
+            let args = []
+            for (let i = 0; i < listener.args.length; i++) {
+                let arg = state.getArg(listener.args[i]);
+                if (arg) {
+                    args.push(arg);
+                } else {
+                    this._emitError(`expected parameter \`${listener.args[i]}\``);
+                    return;
+                }
+            }
+
+            listener.callback(args);
+        }
+    }
+}
 
 class Token {
     constructor(kind, value) {
@@ -23,7 +94,7 @@ class State {
         this.args = args;
     }
 
-    argument(parameter) {
+    getArg(parameter) {
         for (const arg of this.args) {
             if (arg.parameter == parameter) {
                 return arg.value;
@@ -33,7 +104,7 @@ class State {
     }
 }
 
-export function parseState(state) {
+function parseState(state) {
     let chars = [];
 
     for (const char of state) {
