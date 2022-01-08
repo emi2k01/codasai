@@ -11,6 +11,7 @@ main {
     .file-viewer {
         min-width: 0;
         width: auto;
+        flex-grow: 1;
     }
 
     .explorer {

@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=6.0, minimum-scale=1.0">
 </head>
-<body>
+<body data-workspace-url='{{guide.base_url | url_join(page.code) |url_join("workspace")}}'>
     {% include "header.html" %}
     {% include "main.html" %}
     {% include "offscreen/explorer.html" %}
