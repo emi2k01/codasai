@@ -8,6 +8,7 @@
     top: 0;
     background-color: RGB(var(--offscreen-bg));
     z-index: 10;
+    overflow: auto;
 
     &.open {
         display: initial;
