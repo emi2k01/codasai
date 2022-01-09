@@ -7,6 +7,7 @@ use clap::Parser;
 use crate::context::{
     Directory, GlobalContext, GuideContext, Index, PageContext, WorkspaceOutlineBuilder,
 };
+use crate::page::PagePreprocessor;
 use crate::paths;
 
 #[derive(Parser)]
@@ -29,6 +30,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
         index: index.clone(),
         base_url: opts.base_url.clone(),
     };
+    let preprocessor = PagePreprocessor::new(&guide_ctx);
 
     let repo = git2::Repository::open(&project)
         .with_context(|| format!("failed to open repository at {:?}", &project))?;
@@ -38,8 +40,8 @@ pub fn execute(opts: &Opts) -> Result<()> {
     for rev in revwalk(&repo)? {
         let rev = rev.context("failed to retrieve rev")?;
 
-        let page = if let Some(page) = find_new_page(&repo, last_rev, rev)? {
-            page
+        let (file_name, page) = if let Some((name, page)) = find_new_page(&repo, last_rev, rev)? {
+            (name, page)
         } else {
             continue;
         };
@@ -51,7 +53,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
             number: page_num,
             title: crate::page::extract_title(&page),
             code: index.entries[page_num].code.clone(),
-            content: crate::page::markdown_to_html(&page),
+            content: crate::page::markdown_to_html(&preprocessor.preprocess(&file_name, &page)?),
             workspace: workspace_outline,
             previous_page_code: index
                 .entries
@@ -98,9 +100,11 @@ fn revwalk(repo: &git2::Repository) -> Result<git2::Revwalk> {
 /// Finds the new page in `new_rev` by performing a diff between both revisions.
 ///
 /// An `old_rev` with a `None` value indicates an empty tree.
+///
+/// Returns a tuple containing the file name and its contents
 fn find_new_page(
     repo: &git2::Repository, old_rev: Option<git2::Oid>, new_rev: git2::Oid,
-) -> Result<Option<String>> {
+) -> Result<Option<(String, String)>> {
     let old_tree = old_rev.and_then(|old_rev| {
         repo.find_commit(old_rev)
             .ok()
@@ -123,7 +127,7 @@ fn find_new_page(
                     .unwrap()
                     .content()
                     .to_vec();
-                return Ok(Some(String::from_utf8(page_bytes).unwrap()));
+                return Ok(Some((file_path.display().to_string(), String::from_utf8(page_bytes).unwrap())));
             }
         }
     }

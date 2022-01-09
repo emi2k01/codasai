@@ -3,8 +3,52 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use git2::Status;
-use pulldown_cmark::Parser;
 use minijinja::{Environment, Source};
+use pulldown_cmark::Parser;
+
+use crate::context::GuideContext;
+
+/// Structure used to preprocess markdown files.
+///
+/// This structure gives markdown files more capabilities by preprocessing the contents with a
+/// template engine that exposes useful functions.
+pub struct PagePreprocessor<'a> {
+    env: Environment<'a>,
+}
+
+impl<'a> PagePreprocessor<'a> {
+    pub fn new(ctx: &'a GuideContext) -> Self {
+        let mut env = Environment::new();
+
+        let url = ctx.base_url.clone();
+        let static_resource = move |_: &minijinja::State, path: String| -> Result<String, minijinja::Error> {
+            let mut url = url.clone();
+
+            if !url.ends_with("/") {
+                url.push('/');
+            }
+            url.push_str("public/user/");
+
+            let relative_path = path.strip_prefix("/").unwrap_or(&path);
+
+            url.push_str(relative_path);
+
+            Ok(url)
+        };
+
+        env.add_function("static_resource", static_resource);
+
+        Self { env }
+    }
+
+    pub fn preprocess(&self, name: &str, page: &str) -> Result<String> {
+        let mut env = self.env.clone();
+        env.add_template(name, page)?;
+        let out = env.get_template(name).unwrap().render(&())?;
+
+        Ok(out)
+    }
+}
 
 /// Converts markdown to sanitized html.
 pub fn markdown_to_html(markdown: &str) -> String {
@@ -33,8 +77,8 @@ pub fn extract_title(page: &str) -> String {
                 if in_heading {
                     return text.to_string();
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -49,7 +93,9 @@ pub fn read_theme_templates(project: &Path) -> Result<Environment> {
     source.load_from_path(&templates_dir, &["html"])?;
     engine.set_source(source);
 
-    fn url_join(_state: &minijinja::State, base_url: String, fragment: String) -> Result<String, minijinja::Error> {
+    fn url_join(
+        _state: &minijinja::State, base_url: String, fragment: String,
+    ) -> Result<String, minijinja::Error> {
         let fragment = Path::new(&fragment);
         let relative_fragment = fragment.strip_prefix("/").unwrap_or(fragment);
 

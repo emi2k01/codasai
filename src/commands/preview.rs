@@ -1,12 +1,15 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use minijinja::Environment;
-use ignore::Walk;
 use clap::Parser;
+use ignore::Walk;
+use minijinja::Environment;
 
 use crate::code;
-use crate::context::{Directory, GuideContext, Index, PageContext, WorkspaceOutlineBuilder, GlobalContext};
+use crate::context::{
+    Directory, GlobalContext, GuideContext, Index, PageContext, WorkspaceOutlineBuilder,
+};
+use crate::page::PagePreprocessor;
 
 #[derive(Parser)]
 pub struct Opts {
@@ -156,22 +159,28 @@ fn export_workspace_file(file: &Path, project: &Path, preview_ws: &Path) -> Resu
 ///
 /// It uses `template.html` in `template_engine` to render the page.
 pub fn export_unsaved_page(project: &Path, template_engine: &Environment) -> Result<()> {
-    let page = crate::page::find_unsaved_page(project).context("failed to find new page")?;
-    let page = page.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
+    let page_path_relative = crate::page::find_unsaved_page(project)
+        .context("failed to find new page")?
+        .ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
     // `page` as given by git2 is relative to the git repository root but we need
     // the absolute path.
-    let page = project.join(page);
-    let page =
-        std::fs::read_to_string(&page).with_context(|| format!("failed to read {:?}", &page))?;
-
-    let title = crate::page::extract_title(&page);
-    let page_html = crate::page::markdown_to_html(&page);
+    let page_path = project.join(page_path_relative);
+    let page = std::fs::read_to_string(&page_path)
+        .with_context(|| format!("failed to read {:?}", &page_path))?;
 
     let guide_context = GuideContext {
         base_url: "/".to_string(),
         index: Index::default(),
     };
 
+    let preprocessor = PagePreprocessor::new(&guide_context);
+
+    let page_path_str = page_path.display().to_string();
+    let page_html = crate::page::markdown_to_html(
+        &preprocessor.preprocess(&page_path_str, &page)?,
+    );
+
+    let title = crate::page::extract_title(&page);
     let page_context = PageContext {
         number: 0,
         title,
