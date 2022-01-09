@@ -1,4 +1,8 @@
 export default function register() {
+    window.addEventListener("hashchange", () => {
+        closeAll();
+    });
+
     let dimmer = document.getElementById("dimmer");
     dimmer.addEventListener("click", closeAll);
 
