@@ -144,14 +144,16 @@ fn export_workspace_file(file: &Path, project: &Path, preview_ws: &Path) -> Resu
     std::fs::create_dir_all(parent)
         .with_context(|| format!("failed to create directory {:?}", parent))?;
 
-    let code_unsafe =
-        std::fs::read_to_string(file).with_context(|| format!("failed to read file {:?}", file))?;
+    let contents_unsafe = match std::fs::read(file) {
+        Ok(c) => String::from_utf8(c).unwrap_or_else(|_| "BINARY FILE".to_string()),
+        Err(e) => return Err(e).with_context(|| format!("failed to read file {:?}", file))
+    };
 
     // Only languages supported by `syntect` are highlighted.
     // Files that don't have a supported file extension are only escaped.
     let extension = file.extension().unwrap_or_default().to_str().unwrap();
-    let code = code::escape_and_highlight(&code_unsafe, extension);
-    std::fs::write(&preview_path, &code)
+    let contents = code::escape_and_highlight(&contents_unsafe, extension);
+    std::fs::write(&preview_path, &contents)
         .with_context(|| format!("failed to write to {:?}", &preview_path))?;
 
     Ok(())
