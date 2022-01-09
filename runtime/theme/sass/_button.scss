@@ -26,7 +26,12 @@
     color: RGB(var(--button-primary-fg));
     transition: all 0.08s ease-in;
 
-    &:hover {
+    &.disabled {
+        cursor: not-allowed;
+        background-color: RGB(var(--button-primary-disabled-bg));
+    }
+
+    &:not(.disabled):hover {
         background-color: RGB(var(--button-primary-bg-hover));
     }
 }
