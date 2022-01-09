@@ -9,8 +9,8 @@ use crate::paths::ProjectPaths;
 
 /// Takes care of exporting all files needed by the guide such as images, css, etc.
 pub fn export_public_files(project: &ProjectPaths) -> Result<()> {
-    if project.export.exists() {
-        std::fs::remove_dir_all(&project.export).context("failed to remove export directory")?;
+    if project.export().exists() {
+        std::fs::remove_dir_all(&project.export()).context("failed to remove export directory")?;
     }
 
     export_user_static_dir(project).context("failed to export public directory")?;
@@ -23,8 +23,8 @@ pub fn export_public_files(project: &ProjectPaths) -> Result<()> {
 
 /// Compiles the `.thTheme` provided by the project's theme.
 fn compile_syntax_themes(project: &ProjectPaths) -> Result<()> {
-    let themes_dir = project.theme.join("syntax");
-    let out_dir = project.export.join("public/theme/syntax");
+    let themes_dir = project.theme().join("syntax");
+    let out_dir = project.export().join("public/theme/syntax");
     std::fs::create_dir_all(&out_dir)
         .with_context(|| format!("failed to create directory {:?}", out_dir))?;
 
@@ -42,8 +42,8 @@ fn compile_syntax_themes(project: &ProjectPaths) -> Result<()> {
 
 /// Compiles the project's theme sass to the exported public directory
 fn compile_sass(project: &ProjectPaths) -> Result<()> {
-    let sass_dir = project.theme.join("sass");
-    let out_dir = project.export.join("public/theme/style");
+    let sass_dir = project.theme().join("sass");
+    let out_dir = project.export().join("public/theme/style");
 
     let walkdir = WalkDir::new(&sass_dir)
         .into_iter()
@@ -97,16 +97,16 @@ fn compile_sass(project: &ProjectPaths) -> Result<()> {
 
 /// Exports the static directory provided by the author of the project's theme.
 fn copy_theme_static_dir(project: &ProjectPaths) -> Result<()> {
-    let public = project.theme.join("static");
-    let dest = project.export.join("public/theme");
+    let public = project.theme().join("static");
+    let dest = project.export().join("public/theme");
 
     copy_dir_contents(&public, &dest)
 }
 
 /// Exports the static directory provided by the author of the guide.
 fn export_user_static_dir(project: &ProjectPaths) -> Result<()> {
-    let public = project.user_static.clone();
-    let dest = project.export.join("public/user");
+    let public = project.user_static().clone();
+    let dest = project.export().join("public/user");
 
     copy_dir_contents(&public, &dest)
 }

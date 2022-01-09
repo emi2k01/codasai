@@ -1,5 +1,5 @@
 use std::ffi::OsString;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -18,11 +18,18 @@ pub struct Opts {
     /// By default, it is the current domain's root.
     #[clap(long, default_value = "/")]
     base_url: String,
+
+    /// Directory where output files will be stored.
+    #[clap(long)]
+    export_dir: Option<PathBuf>,
 }
 
 pub fn execute(opts: &Opts) -> Result<()> {
-    let project_paths = paths::ProjectPaths::new()?;
-    let project = project_paths.project.clone();
+    let mut project_paths = paths::ProjectPaths::new()?;
+    if let Some(export_dir) = opts.export_dir.clone() {
+        project_paths.set_export(export_dir);
+    }
+    let project = project_paths.project().clone();
 
     crate::export::export_public_files(&project_paths)?;
     let index = Index::from_project(&project)?;
@@ -65,7 +72,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
                 .map(|e| e.code.clone()),
         };
 
-        let out_dir = project.join(format!(".codasai/export/{}", index.entries[page_num].code));
+        let out_dir = project_paths.export().join(&index.entries[page_num].code);
 
         let context = GlobalContext {
             page: &page_ctx,

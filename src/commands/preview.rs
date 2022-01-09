@@ -26,8 +26,8 @@ pub struct Opts {
 pub fn execute(opts: &Opts) -> Result<()> {
     // TODO: Take `--path` into account
     let project_paths = crate::paths::ProjectPaths::new()?;
-    let project = &project_paths.project;
-    let export_dir = &project_paths.export;
+    let project = project_paths.project();
+    let export_dir = project_paths.export();
     let preview_dir = export_dir.join("preview");
 
     // clean previous build
