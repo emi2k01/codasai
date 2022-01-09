@@ -5,7 +5,7 @@ use syntect::util::LinesWithEndings;
 
 use crate::html;
 
-static SYNTAX_SET_DUMP_BIN: &'static [u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/syntaxset.packdump"));
+static SYNTAX_SET_DUMP_BIN: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/syntaxset.packdump"));
 
 thread_local! {
     static SYNTAX_SET: Lazy<SyntaxSet> = Lazy::new(|| {

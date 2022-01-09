@@ -37,13 +37,13 @@ pub fn execute(opts: &Opts) -> Result<()> {
     }
 
     crate::export::export_public_files(&project_paths)?;
-    export_workspace(&project).context("failed to render workspace")?;
+    export_workspace(project).context("failed to render workspace")?;
 
-    let template_engine = crate::page::read_theme_templates(&project)?;
-    export_unsaved_page(&project, &template_engine).context("failed to render page")?;
+    let template_engine = crate::page::read_theme_templates(project)?;
+    export_unsaved_page(project, &template_engine).context("failed to render page")?;
 
     if !opts.no_run_server {
-        server::launch_server(&export_dir, !opts.no_open);
+        server::launch_server(export_dir, !opts.no_open);
     }
 
     Ok(())

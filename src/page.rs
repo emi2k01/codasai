@@ -24,12 +24,12 @@ impl<'a> PagePreprocessor<'a> {
         let static_resource = move |_: &minijinja::State, path: String| -> Result<String, minijinja::Error> {
             let mut url = url.clone();
 
-            if !url.ends_with("/") {
+            if !url.ends_with('/') {
                 url.push('/');
             }
             url.push_str("public/user/");
 
-            let relative_path = path.strip_prefix("/").unwrap_or(&path);
+            let relative_path = path.strip_prefix('/').unwrap_or(&path);
 
             url.push_str(relative_path);
 
@@ -102,8 +102,7 @@ pub fn read_theme_templates(project: &Path) -> Result<Environment> {
         Ok(Path::new(&base_url)
             .join(relative_fragment)
             .display()
-            .to_string()
-            .into())
+            .to_string())
     }
     engine.add_filter("url_join", url_join);
 

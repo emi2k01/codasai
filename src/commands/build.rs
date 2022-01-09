@@ -96,7 +96,7 @@ pub fn execute(opts: &Opts) -> Result<()> {
 fn revwalk(repo: &git2::Repository) -> Result<git2::Revwalk> {
     let mut revwalk = repo
         .revwalk()
-        .with_context(|| format!("failed to create rev walker for repository",))?;
+        .with_context(|| "failed to create rev walker for repository")?;
     revwalk.set_sorting(git2::Sort::REVERSE)?;
     revwalk
         .push_head()

@@ -17,8 +17,8 @@ impl Index {
         let index_path = project.join(".codasai/index.toml");
         let index_toml = std::fs::read_to_string(&index_path)
             .with_context(|| format!("failed to read page registry {:?}", &index_path))?;
-        Ok(toml::from_str(&index_toml)
-            .with_context(|| format!("failed to deserialize index at {:?}", &index_path))?)
+        toml::from_str(&index_toml)
+            .with_context(|| format!("failed to deserialize index at {:?}", &index_path))
     }
 
     pub fn write_to_project(&self, project: &Path) -> Result<()> {

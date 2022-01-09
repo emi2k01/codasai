@@ -70,8 +70,11 @@ fn commit_page(new_page_title: String, new_page_file_name: String) -> Result<(),
         ])
         .output()
         .context("failed to invoke \"git add -A\"")?;
-    Ok(if !git_commit_output.status.success() {
+
+    if !git_commit_output.status.success() {
         let git_error = String::from_utf8_lossy(&git_add_output.stderr);
         anyhow::bail!("`git commit` exited with error:\n\n{}", git_error);
-    })
+    };
+
+    Ok(())
 }
