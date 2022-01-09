@@ -17,6 +17,7 @@ main {
     .explorer {
         min-width: 220px;
         width: 18%;
+        flex-shrink: 0;
     }
 
     & > * {
