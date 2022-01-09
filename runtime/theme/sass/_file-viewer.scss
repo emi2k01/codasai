@@ -42,6 +42,10 @@
 
         code {
             display: block;
+
+            span {
+                font-family: inherit;
+            }
         }
 
         code.copy {
