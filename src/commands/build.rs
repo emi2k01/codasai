@@ -12,8 +12,8 @@ use crate::paths;
 
 #[derive(Parser)]
 pub struct Opts {
-    /// Indicates under what url the exported files will be. Useful for sites like Github/Gitlab
-    /// pages
+    /// Indicates under what url the exported files will be. Useful for sites
+    /// like Github/Gitlab pages
     ///
     /// By default, it is the current domain's root.
     #[clap(long, default_value = "/")]
@@ -134,7 +134,10 @@ fn find_new_page(
                     .unwrap()
                     .content()
                     .to_vec();
-                return Ok(Some((file_path.display().to_string(), String::from_utf8(page_bytes).unwrap())));
+                return Ok(Some((
+                    file_path.display().to_string(),
+                    String::from_utf8(page_bytes).unwrap(),
+                )));
             }
         }
     }
@@ -144,9 +147,11 @@ fn find_new_page(
 
 /// Exports the whole workspace in the given `tree` to `workspace`.
 ///
-/// `workspace` is a directory in the working directory and not in a git revision.
+/// `workspace` is a directory in the working directory and not in a git
+/// revision.
 ///
-/// This will highlight the exported files that are supported by the highlighting engine.
+/// This will highlight the exported files that are supported by the
+/// highlighting engine.
 fn export_workspace(repo: &git2::Repository, tree: &git2::Tree, workspace: &Path) -> Result<()> {
     std::fs::create_dir_all(workspace)
         .with_context(|| format!("failed to create directory {:?}", workspace))?;
@@ -211,7 +216,8 @@ fn export_page(ctx: &GlobalContext, project: &Path, out_dir: &Path) -> Result<()
     Ok(())
 }
 
-/// Traverses the workspace directory in the given `tree` and builds and outline.
+/// Traverses the workspace directory in the given `tree` and builds and
+/// outline.
 fn build_workspace_outline(repo: &git2::Repository, tree: &git2::Tree) -> Result<Directory> {
     let mut ws_builder = WorkspaceOutlineBuilder::new();
     tree.walk(git2::TreeWalkMode::PreOrder, |parent, entry| {

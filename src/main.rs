@@ -21,8 +21,8 @@ enum Args {
     Build(build::Opts),
     /// Saves the newly added page.
     ///
-    /// This makes a git commit that includes the new page, your workspace directory and anything that
-    /// you already have staged.
+    /// This makes a git commit that includes the new page, your workspace
+    /// directory and anything that you already have staged.
     Save(save::Opts),
 }
 

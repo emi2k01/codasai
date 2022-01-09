@@ -1,6 +1,6 @@
-use anyhow::Context;
-
 use std::path::Path;
+
+use anyhow::Context;
 
 pub fn launch_server(dir: &Path, open_browser: bool) {
     tokio::runtime::Builder::new_multi_thread()
@@ -25,15 +25,16 @@ pub fn launch_server(dir: &Path, open_browser: bool) {
 
             let app = axum::Router::new().nest(
                 "/",
-                axum::routing::get_service(tower_http::services::ServeDir::new(&dir))
-                    .handle_error(|e| {
+                axum::routing::get_service(tower_http::services::ServeDir::new(&dir)).handle_error(
+                    |e| {
                         async move {
                             (
                                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                                 format!("Unhandled internal error: {}", e),
                             )
                         }
-                    }),
+                    },
+                ),
             );
             axum::Server::bind(&std::net::SocketAddr::from((address, port)))
                 .serve(app.into_make_service())

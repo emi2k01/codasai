@@ -5,7 +5,10 @@ use syntect::util::LinesWithEndings;
 
 use crate::html;
 
-static SYNTAX_SET_DUMP_BIN: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/syntaxset.packdump"));
+static SYNTAX_SET_DUMP_BIN: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/assets/syntaxset.packdump"
+));
 
 thread_local! {
     static SYNTAX_SET: Lazy<SyntaxSet> = Lazy::new(|| {
@@ -17,10 +20,11 @@ pub const CLASS_STYLE: ClassStyle = ClassStyle::SpacedPrefixed {
     prefix: "csai-code-",
 };
 
-/// Escapes and highlights `code` using `ext` as the file extension to select the language's syntax.
+/// Escapes and highlights `code` using `ext` as the file extension to select
+/// the language's syntax.
 ///
-/// If the syntax highlighting doesn't support the file extension, the returned string is only
-/// escaped.
+/// If the syntax highlighting doesn't support the file extension, the returned
+/// string is only escaped.
 pub fn escape_and_highlight(code: &str, ext: &str) -> String {
     SYNTAX_SET.with(|ss| -> String {
         if let Some(syntax) = ss.find_syntax_by_extension(ext) {

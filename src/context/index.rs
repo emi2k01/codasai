@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 
 /// A structure used to hold a guide's index.
 ///
-/// This structure is used to create the file that contains the guide's index and also to pass the
-/// guide's index to the front-end.
+/// This structure is used to create the file that contains the guide's index
+/// and also to pass the guide's index to the front-end.
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Index {
     pub entries: Vec<IndexEntry>,

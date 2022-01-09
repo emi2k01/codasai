@@ -10,8 +10,8 @@ use crate::context::GuideContext;
 
 /// Structure used to preprocess markdown files.
 ///
-/// This structure gives markdown files more capabilities by preprocessing the contents with a
-/// template engine that exposes useful functions.
+/// This structure gives markdown files more capabilities by preprocessing the
+/// contents with a template engine that exposes useful functions.
 pub struct PagePreprocessor<'a> {
     env: Environment<'a>,
 }
@@ -21,20 +21,21 @@ impl<'a> PagePreprocessor<'a> {
         let mut env = Environment::new();
 
         let url = ctx.base_url.clone();
-        let static_resource = move |_: &minijinja::State, path: String| -> Result<String, minijinja::Error> {
-            let mut url = url.clone();
+        let static_resource =
+            move |_: &minijinja::State, path: String| -> Result<String, minijinja::Error> {
+                let mut url = url.clone();
 
-            if !url.ends_with('/') {
-                url.push('/');
-            }
-            url.push_str("public/user/");
+                if !url.ends_with('/') {
+                    url.push('/');
+                }
+                url.push_str("public/user/");
 
-            let relative_path = path.strip_prefix('/').unwrap_or(&path);
+                let relative_path = path.strip_prefix('/').unwrap_or(&path);
 
-            url.push_str(relative_path);
+                url.push_str(relative_path);
 
-            Ok(url)
-        };
+                Ok(url)
+            };
 
         env.add_function("static_resource", static_resource);
 
@@ -77,8 +78,8 @@ pub fn extract_title(page: &str) -> String {
                 if in_heading {
                     return text.to_string();
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 

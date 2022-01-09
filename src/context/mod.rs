@@ -5,9 +5,9 @@ mod workspace;
 
 pub use guide::GuideContext;
 pub use index::{Index, IndexEntry};
+pub use page::PageContext;
 use serde::Serialize;
 pub use workspace::{Directory, File, WorkspaceOutlineBuilder};
-pub use page::PageContext;
 
 #[derive(Serialize)]
 pub struct GlobalContext<'a> {

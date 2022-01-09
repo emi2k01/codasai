@@ -2,12 +2,14 @@ use std::ffi::OsStr;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use syntect::{highlighting::ThemeSet, html::css_for_theme_with_class_style};
+use syntect::highlighting::ThemeSet;
+use syntect::html::css_for_theme_with_class_style;
 use walkdir::WalkDir;
 
 use crate::paths::ProjectPaths;
 
-/// Takes care of exporting all files needed by the guide such as images, css, etc.
+/// Takes care of exporting all files needed by the guide such as images, css,
+/// etc.
 pub fn export_public_files(project: &ProjectPaths) -> Result<()> {
     if project.export().exists() {
         std::fs::remove_dir_all(&project.export()).context("failed to remove export directory")?;

@@ -18,7 +18,8 @@ pub struct Opts {
     /// Indicates if the browser should not be open.
     #[clap(long)]
     no_open: bool,
-    /// Indicates if the built-in web server should not be used to serve the guide.
+    /// Indicates if the built-in web server should not be used to serve the
+    /// guide.
     #[clap(long)]
     no_run_server: bool,
 }
@@ -117,10 +118,11 @@ fn export_workspace(project: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Exports `file` to `preview_ws` keeping the same directory structure relative to the workspace
-/// directory.
+/// Exports `file` to `preview_ws` keeping the same directory structure relative
+/// to the workspace directory.
 ///
-/// It highlights the exported files it they're supported by the highlighting engine.
+/// It highlights the exported files it they're supported by the highlighting
+/// engine.
 fn export_workspace_file(file: &Path, project: &Path, preview_ws: &Path) -> Result<()> {
     let relative_path = file
         .strip_prefix(&project.join("workspace"))
@@ -132,10 +134,10 @@ fn export_workspace_file(file: &Path, project: &Path, preview_ws: &Path) -> Resu
             let mut extension = extension.to_owned();
             extension.push(".html");
             preview_path.set_extension(extension);
-        }
+        },
         None => {
             preview_path.set_extension("html");
-        }
+        },
     }
 
     let parent = preview_path.parent().unwrap();
@@ -176,9 +178,7 @@ pub fn export_unsaved_page(project: &Path, template_engine: &Environment) -> Res
     let preprocessor = PagePreprocessor::new(&guide_context);
 
     let page_path_str = page_path.display().to_string();
-    let page_html = crate::page::markdown_to_html(
-        &preprocessor.preprocess(&page_path_str, &page)?,
-    );
+    let page_html = crate::page::markdown_to_html(&preprocessor.preprocess(&page_path_str, &page)?);
 
     let title = crate::page::extract_title(&page);
     let page_context = PageContext {

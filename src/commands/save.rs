@@ -16,7 +16,8 @@ pub fn execute(_opts: &Opts) -> Result<()> {
 
     let mut index = Index::from_project(&project)?;
 
-    let new_page_path = crate::page::find_unsaved_page(&project).context("failed to find new page")?;
+    let new_page_path =
+        crate::page::find_unsaved_page(&project).context("failed to find new page")?;
     let new_page_path = new_page_path.ok_or(anyhow::anyhow!("there are no unsaved pages"))?;
     let new_page_content = std::fs::read_to_string(&new_page_path)
         .with_context(|| format!("failed to read new page at {:?}", &new_page_path))?;
