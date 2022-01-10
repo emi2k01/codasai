@@ -4,6 +4,7 @@
 }
 
 .page {
+    font-size: 0.9rem;
     padding: 20px;
     line-height: 1.5em;
 
@@ -17,5 +18,44 @@
 
     img {
         max-width: 100%;
+    }
+
+    a[href^="#csai"] {
+        padding: 0.2em 0.15em;
+        text-decoration: none;
+        background-color: RGBA(var(--action-bg));
+        border-radius: 5px;
+        color: RGBA(var(--action-fg));
+
+        code {
+            background-color: transparent;
+            border-radius: 0;
+            padding: 0;
+        }
+    }
+
+    code {
+        background-color: RGB(var(--md-code-bg));
+        border-radius: 5px;
+        padding: 0.2em 0.15em;
+        color: RGB(var(--md-code-fg));
+        font-family: monospace;
+    }
+
+    pre {
+        max-width: 100%;
+        overflow: auto;
+        background-color: RGB(var(--md-code-bg));
+        padding: 0.7em 0.5em;
+        border-radius: 5px;
+    }
+
+    blockquote {
+        margin-left: 0;
+        padding-left: 18px;
+        border-left: solid 3px RGB(var(--md-quote-border-bg));
+        p {
+            color: RGB(var(--md-quote-fg));
+        }
     }
 }

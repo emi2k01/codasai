@@ -5,6 +5,10 @@
     --list-padding: 12px;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;

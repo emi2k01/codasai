@@ -16,6 +16,10 @@
                 margin-left: 0.5em;
             }
         }
+
+        & > span:not(.material-icons-round) {
+            font-size: 0.85rem;
+        }
     }
 
     // common button styling

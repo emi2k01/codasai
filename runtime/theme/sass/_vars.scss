@@ -27,5 +27,13 @@ html {
     --offscreen-bg: var(--body-bg);
     --offscreen-dimmer-bg: 0, 0, 0;
 
-    --highlight-bg: 166, 63, 66, 0.2;
+    --md-code-bg: 206, 206, 192;
+    --md-code-fg: var(--body-fg);
+    --md-quote-border-bg: 50, 50, 69;
+    --md-quote-fg: var(--md-quote-border-bg);
+
+    --action-bg: 112, 178, 185, 0.24;
+    --action-fg: var(--body-fg);
+
+    --highlight-bg: var(--action-bg);
 }
