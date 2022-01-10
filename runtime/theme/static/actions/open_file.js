@@ -1,4 +1,15 @@
+let lastOpenFile = null;
+
 export default function openFile(path, callback) {
+    if (lastOpenFile == path) {
+        if (callback) {
+            callback();
+        }
+        return;
+    }
+
+    lastOpenFile = path;
+
     let workspaceUrl = document.body.getAttribute("data-workspace-url");
     let url = workspaceUrl + "/" + path + ".html";
 
