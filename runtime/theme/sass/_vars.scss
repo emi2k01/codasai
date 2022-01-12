@@ -7,15 +7,15 @@ html {
     --header-height: 40px;
     --file-viewer-line-height: 1.2em;
 
-    --body-bg: 225, 225, 219;
+    --body-bg: 222, 220, 217;
     --body-fg: 11, 20, 18;
-    --primary-color: 39, 80, 70;
+    --primary-color: 34, 38, 46;
     --primary-color-fg: 255, 255, 255;
-    --button-primary-bg: 61, 126, 115;
+    --button-primary-bg: 59, 68, 82;
     --button-primary-fg: 255, 255, 255;
-    --button-primary-bg-hover: 72, 170, 152;
+    --button-primary-bg-hover: 66, 130, 130;
     --button-primary-fg-hover: var(--button-primary-fg);
-    --button-primary-disabled-bg: 34, 62, 55;
+    --button-primary-disabled-bg: 26, 30, 38;
     --button-border-radius: 5px;
 
     --explorer-entry-bg: var(--body-bg);
@@ -27,13 +27,37 @@ html {
     --offscreen-bg: var(--body-bg);
     --offscreen-dimmer-bg: 0, 0, 0;
 
-    --md-code-bg: 206, 206, 192;
+    --md-code-bg: 199, 200, 201;
     --md-code-fg: var(--body-fg);
     --md-quote-border-bg: 50, 50, 69;
     --md-quote-fg: var(--md-quote-border-bg);
 
-    --action-bg: 112, 178, 185, 0.24;
+    --action-bg: var(--md-code-bg);
     --action-fg: var(--body-fg);
 
     --highlight-bg: var(--action-bg);
+}
+
+@mixin dark-vars {
+    --body-bg: 27, 30, 34;
+    --body-fg: 225, 227, 230;
+
+    --explorer-entry-bg-hover: 85, 92, 104;
+
+    --md-code-bg: 61, 66, 74;
+    --md-quote-border-bg: 195, 198, 199;
+    --md-quote-fg: 170, 176, 176;
+
+    --normal-link: rgb(55, 171, 227);
+    --visited-link: rgb(181, 146, 209);
+}
+
+@media screen and (prefers-color-scheme: dark) {
+    html {
+        @include dark-vars;
+    }
+}
+
+html[data-theme="dark"] {
+    @include dark-vars;
 }

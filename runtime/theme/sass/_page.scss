@@ -7,6 +7,15 @@
     font-size: 0.9rem;
     padding: 20px;
     line-height: 1.5em;
+    color: RGB(var(--body-fg));
+
+    a {
+        color: var(--normal-link, revert);
+
+        &:visited {
+            color: var(--visited-link, revert);
+        }
+    }
 
     *:first-child {
         margin-top: 0;
@@ -21,9 +30,9 @@
     }
 
     a[href^="#csai"] {
-        padding: 0.2em 0.15em;
-        text-decoration: none;
-        background-color: RGBA(var(--action-bg));
+        padding: 0.08em 0.15em;
+        text-decoration: underline dotted;
+        background-color: RGB(var(--action-bg));
         border-radius: 5px;
         color: RGBA(var(--action-fg));
 
@@ -37,7 +46,7 @@
     code {
         background-color: RGB(var(--md-code-bg));
         border-radius: 5px;
-        padding: 0.2em 0.15em;
+        padding: 0.08em 0.15em;
         color: RGB(var(--md-code-fg));
         font-family: monospace;
     }

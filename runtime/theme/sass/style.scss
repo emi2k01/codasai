@@ -18,6 +18,7 @@ html {
 
 body {
     background-color: RGB(var(--body-bg));
+    color: RGB(var(--body-fg));
 }
 
 @import "button";
